@@ -108,7 +108,7 @@ body {
   box-shadow:inset 0 4px 6px rgba(255,255,255,0.4),inset 0 -4px 6px rgba(0,0,0,0.3);
 }
 
-/* Floating FX text */
+/* FX text */
 .fx-text {
   position:absolute; pointer-events:none; z-index:100; text-align:center;
   animation:fxFloat 0.9s ease-out forwards;
@@ -120,10 +120,10 @@ body {
   100%{transform:translate(-50%,-110px) scale(0.8); opacity:0;}
 }
 .fx-score { font-size:26px; font-weight:900; color:#fff; text-shadow:0 2px 8px rgba(0,0,0,0.7); }
-.fx-msg { font-size:24px; font-weight:900; background:linear-gradient(180deg,#fff,#a5b4fc); -webkit-background-clip:text; -webkit-text-fill-color:transparent; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
-.fx-combo { font-size:30px; font-weight:900; color:#fbbf24; font-style:italic; text-shadow:0 0 12px #f59e0b,0 2px 6px rgba(0,0,0,0.8); }
+.fx-msg { font-size:22px; font-weight:900; background:linear-gradient(180deg,#fff,#a5b4fc); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.fx-combo { font-size:28px; font-weight:900; color:#fbbf24; font-style:italic; text-shadow:0 0 12px #f59e0b; }
 
-/* All Clear overlay */
+/* All Clear */
 #all-clear-overlay {
   position:absolute; inset:0; pointer-events:none; z-index:150;
   display:none; flex-direction:column; align-items:center; justify-content:center;
@@ -170,7 +170,7 @@ body {
   <div id="grid"></div>
   <div id="all-clear-overlay">
     <div class="ac-title">ALL CLEAR!</div>
-    <div class="ac-pts" id="ac-pts">+500</div>
+    <div class="ac-pts">+500</div>
   </div>
 </div>
 
@@ -194,38 +194,77 @@ function calcCS(){
   var vw=window.innerWidth, vh=window.innerHeight;
   var availW=Math.min(vw-32,400);
   var fromW=Math.floor((availW-(GS-1)*GAP)/GS);
-  var overhead=200; // header+tray+margins
+  var overhead=200;
   var fromH=Math.floor((vh-overhead-(GS-1)*GAP-12)/GS);
   CS=Math.max(28,Math.min(fromW,fromH,50));
 }
 
-// ── Shapes & Colors (Gemini weights, fixed colors per shape) ──────────────────
+// ── Shapes (fixed color per shape type) ───────────────────────────────────────
 var SHAPES=[
-  {s:[[1]],                          c:"#3b82f6", w:2},
-  {s:[[1,1]],                        c:"#06b6d4", w:4},
-  {s:[[1],[1]],                      c:"#06b6d4", w:4},
-  {s:[[1,1,1]],                      c:"#22c55e", w:5},
-  {s:[[1],[1],[1]],                  c:"#22c55e", w:5},
-  {s:[[1,1,1,1]],                    c:"#eab308", w:4},
-  {s:[[1],[1],[1],[1]],              c:"#eab308", w:4},
-  {s:[[1,1,1,1,1]],                  c:"#ef4444", w:3},
-  {s:[[1],[1],[1],[1],[1]],          c:"#ef4444", w:3},
-  {s:[[1,1],[1,1]],                  c:"#8b5cf6", w:5},
-  {s:[[1,1,1],[1,1,1],[1,1,1]],      c:"#ec4899", w:2},
-  {s:[[1,0],[1,1]],                  c:"#f97316", w:4},
-  {s:[[0,1],[1,1]],                  c:"#f97316", w:4},
-  {s:[[1,1],[1,0]],                  c:"#f97316", w:4},
-  {s:[[1,1],[0,1]],                  c:"#f97316", w:4},
-  {s:[[1,0,0],[1,0,0],[1,1,1]],      c:"#f97316", w:3},
-  {s:[[0,0,1],[0,0,1],[1,1,1]],      c:"#f97316", w:3},
-  {s:[[1,1,1],[1,0,0],[1,0,0]],      c:"#f97316", w:3},
-  {s:[[1,1,1],[0,0,1],[0,0,1]],      c:"#f97316", w:3},
+  {s:[[1]],                          c:"#3b82f6"},
+  {s:[[1,1]],                        c:"#2dd4bf"},
+  {s:[[1],[1]],                      c:"#2dd4bf"},
+  {s:[[1,1,1]],                      c:"#4ade80"},
+  {s:[[1],[1],[1]],                  c:"#4ade80"},
+  {s:[[1,1,1,1]],                    c:"#facc15"},
+  {s:[[1],[1],[1],[1]],              c:"#facc15"},
+  {s:[[1,1,1,1,1]],                  c:"#f87171"},
+  {s:[[1],[1],[1],[1],[1]],          c:"#f87171"},
+  {s:[[1,1],[1,1]],                  c:"#a78bfa"},
+  {s:[[1,1,1],[1,1,1],[1,1,1]],      c:"#ec4899"},
+  {s:[[1,0],[1,1]],                  c:"#fb923c"},
+  {s:[[0,1],[1,1]],                  c:"#fb923c"},
+  {s:[[1,1],[1,0]],                  c:"#fb923c"},
+  {s:[[1,1],[0,1]],                  c:"#fb923c"},
+  {s:[[1,0,0],[1,0,0],[1,1,1]],      c:"#fb923c"},
+  {s:[[0,0,1],[0,0,1],[1,1,1]],      c:"#fb923c"},
+  {s:[[1,1,1],[1,0,0],[1,0,0]],      c:"#fb923c"},
+  {s:[[1,1,1],[0,0,1],[0,0,1]],      c:"#fb923c"},
 ];
-var POOL=[];
-for(var i=0;i<SHAPES.length;i++) for(var w=0;w<SHAPES[i].w;w++) POOL.push(i);
-function randomBlock(){
-  var t=SHAPES[POOL[Math.floor(Math.random()*POOL.length)]];
-  return{shape:t.s,color:t.c};
+
+// Shape sizes for smart gen
+function shapeSize(s){ var n=0; for(var r=0;r<s.length;r++) for(var c=0;c<s[r].length;c++) if(s[r][c])n++; return n; }
+
+// ── Smart block generation (Gemini algorithm) ─────────────────────────────────
+function canFitAnywhere(shape){
+  for(var r=0;r<=GS-shape.length;r++) for(var c=0;c<=GS-shape[0].length;c++) if(canPlace(shape,r,c))return true;
+  return false;
+}
+
+function generateSmartBlocks(){
+  var emptyCount=0;
+  for(var r=0;r<GS;r++) for(var c=0;c<GS;c++) if(!grid[r][c])emptyCount++;
+
+  // Difficulty: higher score = more large blocks
+  var largeBias=Math.min(0.5, score/5000); // 0 at start, 0.5 at 5000pts
+
+  var result=[];
+  for(var i=0;i<3;i++){
+    var block=null, attempts=0;
+    while(attempts<25){
+      var idx=Math.floor(Math.random()*SHAPES.length);
+      var candidate=SHAPES[idx];
+      var size=shapeSize(candidate.s);
+      var isLarge=size>4;
+
+      // Survival: if board very full, avoid large blocks
+      if(emptyCount<15&&isLarge&&attempts<18){ attempts++; continue; }
+
+      // Difficulty curve: at high scores, occasionally force large blocks
+      if(isLarge&&Math.random()>0.3+largeBias&&attempts<15){ attempts++; continue; }
+
+      // Must fit somewhere on current board
+      if(canFitAnywhere(candidate.s)){
+        block={shape:candidate.s, color:candidate.c};
+        break;
+      }
+      attempts++;
+    }
+    // Fallback: 1x1
+    if(!block) block={shape:SHAPES[0].s, color:SHAPES[0].c};
+    result.push(block);
+  }
+  return result;
 }
 
 // ── State ──────────────────────────────────────────────────────────────────────
@@ -249,7 +288,7 @@ function canPlace(shape,row,col){
 function checkGameOver(){
   for(var i=0;i<3;i++){
     if(!blocks[i])continue;
-    for(var r=0;r<GS;r++) for(var c=0;c<GS;c++) if(canPlace(blocks[i].shape,r,c))return false;
+    if(canFitAnywhere(blocks[i].shape))return false;
   }
   return true;
 }
@@ -315,12 +354,7 @@ function clearGhost(){
     if(!cell)return;
     var parts=id.replace("c","").split("-");
     var r=parseInt(parts[0]),c=parseInt(parts[1]);
-    if(grid[r]&&grid[r][c]){
-      cell.style.background=grid[r][c];
-    } else {
-      cell.style.background="";
-    }
-    cell.style.filter="";
+    cell.style.background=grid[r][c]?grid[r][c]:"";
     cell.style.outline="";
   });
   ghostIds=[];
@@ -381,7 +415,7 @@ function getAnchor(cx,cy){
   var rect=document.getElementById("grid").getBoundingClientRect();
   var cols=dragBlock.shape[0].length,rows=dragBlock.shape.length;
   var bw=cols*CS+(cols-1)*GAP,bh=rows*CS+(rows-1)*GAP;
-  var rx=cx-rect.left-bw/2,ry=cy-rect.top-bh-50;
+  var rx=cx-rect.left-bw/2, ry=cy-rect.top-bh-50;
   return{row:Math.round(ry/(CS+GAP)),col:Math.round(rx/(CS+GAP))};
 }
 function startDrag(idx,cx,cy){
@@ -428,8 +462,8 @@ function drop(cx,cy){
   var idx=dragging;
   dragging=-1; dragBlock=null; hoverR=null; hoverC=null;
 
-  // Render + bounce anim
   renderGrid();
+  // bounce anim on placed cells
   for(var r=0;r<savedShape.length;r++) for(var c=0;c<savedShape[r].length;c++){
     if(!savedShape[r][c])continue;
     var cell=document.getElementById("c"+(savedR+r)+"-"+(savedC+c));
@@ -439,13 +473,12 @@ function drop(cx,cy){
     }
   }
 
-  // 1pt per cell placed
-  score+=bc;
+  score+=bc; // 1pt per cell
   updateScore(false);
 
   blocks[idx]=null;
   if(blocks.every(function(b){return b===null;}))
-    blocks=[randomBlock(),randomBlock(),randomBlock()];
+    blocks=generateSmartBlocks();
   renderTray();
 
   processClears(savedR,savedC);
@@ -470,17 +503,15 @@ function processClears(dropR,dropC){
 
   combo++;
 
-  // Score: total unique cleared cells × 10 × combo
+  // Score: unique cleared cells × 10 × combo
   var fs={};
   for(var i=0;i<rc.length;i++) for(var c=0;c<GS;c++) fs["c"+rc[i]+"-"+c]=1;
   for(var i=0;i<cc.length;i++) for(var r=0;r<GS;r++) fs["c"+r+"-"+cc[i]]=1;
   var keys=Object.keys(fs);
-  var totalCells=keys.length;
-  var clearScore=totalCells*10*combo;
+  var clearScore=keys.length*10*combo;
   score+=clearScore;
   updateScore(true);
 
-  // Floating text
   spawnFX(dropR,dropC,clearScore,combo,lines);
 
   // Save colors for particles
@@ -490,7 +521,7 @@ function processClears(dropR,dropC){
     if(el) colorMap[id]=el.style.background||"#38bdf8";
   });
 
-  // Sweep per row cleared
+  // Sweep per row
   var wrap=document.getElementById("grid-wrap");
   for(var i=0;i<rc.length;i++){
     (function(row){
@@ -524,7 +555,7 @@ function processClears(dropR,dropC){
     Object.keys(groups).forEach(function(col){ spawnParticles(groups[col],col); });
   },75);
 
-  // Apply clears + check all clear
+  // Apply + check all clear
   setTimeout(function(){
     for(var i=0;i<rc.length;i++) for(var c=0;c<GS;c++) grid[rc[i]][c]=null;
     for(var i=0;i<cc.length;i++) for(var r=0;r<GS;r++) grid[r][cc[i]]=null;
@@ -549,14 +580,14 @@ function spawnParticles(cells,color){
     var el=document.getElementById(id);
     if(!el)return;
     var rect=el.getBoundingClientRect();
-    var cx=rect.left+rect.width/2, cy=rect.top+rect.height/2;
+    var cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
     for(var i=0;i<6;i++){
       var p=document.createElement("div");
       p.className="particle";
       var sz=4+Math.random()*5;
       p.style.width=sz+"px"; p.style.height=sz+"px";
       p.style.background=color; p.style.boxShadow="0 0 5px "+color;
-      var angle=Math.random()*Math.PI*2, dist=22+Math.random()*50;
+      var angle=Math.random()*Math.PI*2,dist=22+Math.random()*50;
       p.style.setProperty("--tx",Math.cos(angle)*dist+"px");
       p.style.setProperty("--ty",Math.sin(angle)*dist+"px");
       p.style.left=(cx-sz/2)+"px"; p.style.top=(cy-sz/2)+"px";
@@ -587,7 +618,6 @@ function spawnFX(r,c,pts,cb,lines){
 }
 
 function showAllClear(){
-  document.getElementById("ac-pts").textContent="+500";
   var o=document.getElementById("all-clear-overlay");
   o.style.display="flex";
   var gw=document.getElementById("grid-wrap");
@@ -619,7 +649,7 @@ function resetGame(){
   score=0; combo=0;
   document.getElementById("score-val").textContent=0;
   initGrid();
-  blocks=[randomBlock(),randomBlock(),randomBlock()];
+  blocks=generateSmartBlocks();
   renderGrid(); renderTray();
 }
 
