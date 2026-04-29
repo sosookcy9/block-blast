@@ -9,12 +9,13 @@
 <meta name="mobile-web-app-capable" content="yes">
 <title>Block Blast</title>
 <style>
+/* ── Reset ── */
 * { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-user-select:none; -webkit-tap-highlight-color:transparent; }
-html,body { width:100%; height:100%; overflow:hidden; }
+html, body { width:100%; height:100%; overflow:hidden; touch-action:none; }
 body {
   background:linear-gradient(160deg,#0f1923 0%,#071018 100%);
   display:flex; flex-direction:column; align-items:center; justify-content:center;
-  font-family:-apple-system,'Helvetica Neue',sans-serif;
+  font-family:-apple-system,'Helvetica Neue',sans-serif; color:#fff;
 }
 
 /* ── Header ── */
@@ -25,13 +26,11 @@ body {
   text-shadow:0 0 30px rgba(79,110,247,0.6),0 2px 4px rgba(0,0,0,0.5); }
 .best-area { text-align:center; flex:1; }
 .best-label { font-size:10px; color:#f5a623; font-weight:900; letter-spacing:2px; margin-bottom:2px; }
-.best-val { font-size:20px; font-weight:800; color:#f5a623;
-  text-shadow:0 0 12px rgba(245,166,35,0.4); }
+.best-val { font-size:20px; font-weight:800; color:#f5a623; text-shadow:0 0 12px rgba(245,166,35,0.4); }
 .combo-area { text-align:center; flex:1; min-height:46px; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; }
 .combo-label { font-size:10px; color:#e879f9; font-weight:900; letter-spacing:2px; margin-bottom:2px; }
 .combo-val { font-size:20px; font-weight:900; color:#e879f9; line-height:1;
   text-shadow:0 0 12px rgba(232,121,249,0.5); display:none; }
-
 @keyframes scoreBump { 0%{transform:scale(1)} 40%{transform:scale(1.3)} 100%{transform:scale(1)} }
 .score-bump { animation:scoreBump 0.25s cubic-bezier(.34,1.56,.64,1); }
 @keyframes comboPop { 0%{transform:scale(0);opacity:0} 60%{transform:scale(1.2)} 100%{transform:scale(1);opacity:1} }
@@ -41,24 +40,21 @@ body {
 #grid-wrap {
   background:linear-gradient(145deg,#0d1824,#111e2e);
   border-radius:16px; padding:6px;
-  box-shadow:
-    0 0 0 1px rgba(79,110,247,0.15),
-    0 0 60px rgba(0,0,0,0.8),
-    inset 0 0 0 1px rgba(255,255,255,0.04);
+  box-shadow:0 0 0 1px rgba(79,110,247,0.15),0 0 60px rgba(0,0,0,0.8),inset 0 0 0 1px rgba(255,255,255,0.04);
   position:relative; z-index:1; overflow:hidden;
 }
 #grid { display:grid; gap:2px; position:relative; }
+
 .cell {
   border-radius:5px;
   background:linear-gradient(145deg,#1a2535,#141e2c);
-  position:relative; overflow:hidden;
   box-shadow:inset 0 1px 0 rgba(255,255,255,0.03);
+  will-change:background,transform;
+  transition:background 0.12s;
+  position:relative; overflow:hidden;
 }
 .cell.filled {
-  box-shadow:
-    inset 0 4px 8px rgba(255,255,255,0.35),
-    inset 0 -3px 6px rgba(0,0,0,0.4),
-    0 2px 6px rgba(0,0,0,0.5);
+  box-shadow:inset 0 4px 8px rgba(255,255,255,0.35),inset 0 -3px 6px rgba(0,0,0,0.4),0 2px 6px rgba(0,0,0,0.5);
 }
 .cell.filled::after {
   content:''; position:absolute; top:2px; left:3px; right:3px; height:35%;
@@ -71,45 +67,43 @@ body {
   border-radius:3px; pointer-events:none;
 }
 
-/* ── Animations ── */
-@keyframes placePop { 0%{transform:scale(0.6)} 60%{transform:scale(1.15)} 100%{transform:scale(1)} }
+/* ── Cell Animations ── */
+@keyframes placePop { 0%{transform:scale(0.6)} 60%{transform:scale(1.12)} 100%{transform:scale(1)} }
 .placing { animation:placePop 0.22s cubic-bezier(0.175,0.885,0.32,1.275) forwards; }
 
-@keyframes cellClear { 0%{transform:scale(1);opacity:1} 35%{transform:scale(1.15);opacity:1} 100%{transform:scale(0);opacity:0} }
+@keyframes cellClear { 0%{transform:scale(1);opacity:1} 35%{transform:scale(1.12);opacity:1} 100%{transform:scale(0);opacity:0} }
 .clearing { animation:cellClear 0.28s ease-in forwards; z-index:10; }
 
+/* ── Light Sweep ── */
 .sweep {
   position:absolute; width:60%; height:100%; left:-60%; top:0;
   background:linear-gradient(90deg,transparent,rgba(255,255,255,0.7),transparent);
-  pointer-events:none; z-index:20;
-  animation:sweepAnim 0.35s ease-out forwards;
+  pointer-events:none; z-index:20; animation:sweepAnim 0.35s ease-out forwards;
 }
 @keyframes sweepAnim { 0%{left:-60%} 100%{left:110%} }
-
-/* Column sweep */
 .sweep-col {
   position:absolute; width:100%; height:60%; top:-60%; left:0;
   background:linear-gradient(180deg,transparent,rgba(255,255,255,0.7),transparent);
-  pointer-events:none; z-index:20;
-  animation:sweepColAnim 0.35s ease-out forwards;
+  pointer-events:none; z-index:20; animation:sweepColAnim 0.35s ease-out forwards;
 }
 @keyframes sweepColAnim { 0%{top:-60%} 100%{top:110%} }
 
+/* ── Particles ── */
 .particle {
   position:fixed; pointer-events:none; z-index:300; border-radius:50%;
   animation:particleFly 0.6s ease-out forwards;
 }
 @keyframes particleFly {
-  0%  {transform:translate(0,0) scale(1); opacity:1;}
-  100%{transform:translate(var(--tx),var(--ty)) scale(0); opacity:0;}
+  0%{transform:translate(0,0) scale(1);opacity:1;}
+  100%{transform:translate(var(--tx),var(--ty)) scale(0);opacity:0;}
 }
 
+/* ── Board Feedback ── */
 @keyframes shake {
   0%,100%{transform:translateX(0)} 20%{transform:translateX(-7px)}
   40%{transform:translateX(7px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)}
 }
 .shake { animation:shake 0.3s ease; }
-
 @keyframes boardFlash { 0%,100%{filter:brightness(1)} 40%{filter:brightness(2.5)} }
 .board-flash { animation:boardFlash 0.45s ease; }
 
@@ -117,13 +111,11 @@ body {
 #tray { display:flex; justify-content:space-around; align-items:center; margin-top:14px; height:100px; }
 .block-slot {
   width:100px; height:100px; display:flex; align-items:center; justify-content:center;
-  cursor:grab; transition:opacity 0.2s,transform 0.15s; border-radius:12px;
-  position:relative;
+  cursor:grab; transition:opacity 0.2s,transform 0.15s; border-radius:12px; position:relative;
 }
 .block-slot::before {
   content:''; position:absolute; inset:0; border-radius:12px;
-  border:1px solid rgba(255,255,255,0.04);
-  background:rgba(255,255,255,0.02);
+  border:1px solid rgba(255,255,255,0.04); background:rgba(255,255,255,0.02);
 }
 .block-slot.dragging { opacity:0.08; transform:scale(0.78); }
 .block-slot.used { opacity:0; pointer-events:none; }
@@ -138,9 +130,11 @@ body {
   background:rgba(255,255,255,0.45); border-radius:2px;
 }
 
-/* ── Drag Ghost ── */
+/* ── Drag Ghost（用 transform，硬體加速）── */
 #drag-ghost {
   position:fixed; pointer-events:none; z-index:500; display:none;
+  top:0; left:0;
+  will-change:transform;
   filter:drop-shadow(0 16px 32px rgba(0,0,0,0.7));
 }
 .ghost-cell {
@@ -159,18 +153,16 @@ body {
   animation:fxFloat 0.95s ease-out forwards;
 }
 @keyframes fxFloat {
-  0%  {transform:translate(-50%,0) scale(0.4); opacity:0;}
-  15% {transform:translate(-50%,-24px) scale(1.25); opacity:1;}
-  75% {transform:translate(-50%,-75px) scale(1); opacity:1;}
-  100%{transform:translate(-50%,-105px) scale(0.85); opacity:0;}
+  0%{transform:translate(-50%,0) scale(0.4);opacity:0;}
+  15%{transform:translate(-50%,-24px) scale(1.25);opacity:1;}
+  75%{transform:translate(-50%,-75px) scale(1);opacity:1;}
+  100%{transform:translate(-50%,-105px) scale(0.85);opacity:0;}
 }
-.fx-score { font-size:28px; font-weight:900; color:#fff;
-  text-shadow:0 2px 10px rgba(0,0,0,0.8); }
+.fx-score { font-size:28px; font-weight:900; color:#fff; text-shadow:0 2px 10px rgba(0,0,0,0.8); }
 .fx-msg { font-size:20px; font-weight:900;
   background:linear-gradient(180deg,#fff 0%,#818cf8 100%);
   -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
-.fx-combo { font-size:30px; font-weight:900; color:#f5a623;
-  font-style:italic; text-shadow:0 0 16px rgba(245,166,35,0.7); }
+.fx-combo { font-size:30px; font-weight:900; color:#f5a623; font-style:italic; text-shadow:0 0 16px rgba(245,166,35,0.7); }
 
 /* ── All Clear ── */
 #all-clear-overlay {
@@ -180,9 +172,7 @@ body {
 #all-clear-overlay::before {
   content:''; position:absolute; inset:0;
   background:radial-gradient(circle,rgba(56,189,248,0.2) 0%,transparent 70%);
-  animation:acGlow 0.5s ease-out;
 }
-@keyframes acGlow { 0%{opacity:0} 50%{opacity:1} 100%{opacity:0.6} }
 @keyframes acPop { 0%{transform:scale(0.2) rotate(-10deg);opacity:0} 65%{transform:scale(1.18) rotate(2deg);opacity:1} 100%{transform:scale(1) rotate(0deg);opacity:1} }
 .ac-title {
   font-size:44px; font-weight:900; letter-spacing:3px;
@@ -194,10 +184,6 @@ body {
 .ac-pts { font-size:28px; font-weight:800; color:#fff; margin-top:4px;
   animation:acPop 0.6s cubic-bezier(.34,1.56,.64,1);
   text-shadow:0 0 20px rgba(255,255,255,0.5); }
-
-/* ── Pity indicator (hidden from user, just visual pulse on tray) ── */
-@keyframes trayPulse { 0%,100%{filter:brightness(1)} 50%{filter:brightness(1.3)} }
-.tray-pity { animation:trayPulse 0.6s ease 3; }
 
 /* ── Game Over ── */
 #gameover {
@@ -216,10 +202,9 @@ body {
   text-shadow:0 0 40px rgba(79,110,247,0.5); margin-bottom:4px; }
 .go-best { font-size:16px; color:#f5a623; font-weight:700; margin-bottom:40px; }
 .btn-restart {
-  background:linear-gradient(135deg,#4f6ef7,#818cf8);
-  color:#fff; border:none; border-radius:50px;
-  padding:16px 64px; font-size:20px; font-weight:900; cursor:pointer;
-  box-shadow:0 8px 0 #3451c7,0 14px 28px rgba(79,110,247,0.4);
+  background:linear-gradient(135deg,#4f6ef7,#818cf8); color:#fff;
+  border:none; border-radius:50px; padding:16px 64px; font-size:20px; font-weight:900;
+  cursor:pointer; box-shadow:0 8px 0 #3451c7,0 14px 28px rgba(79,110,247,0.4);
   transition:transform 0.1s,box-shadow 0.1s; letter-spacing:0.5px;
 }
 .btn-restart:active { transform:translateY(6px); box-shadow:0 2px 0 #3451c7,0 4px 8px rgba(0,0,0,0.3); }
@@ -264,8 +249,21 @@ body {
 </div>
 
 <script>
+/* ══════════════════════════════════════════════════
+   Constants & State
+══════════════════════════════════════════════════ */
 var GS=8, GAP=2, CS=40;
+var grid, blocks, score, best, combo;
+var dragging=-1, dragBlock=null, hoverR=null, hoverC=null;
+var noClearStreak=0;
+var rafId=null;
 
+best=parseInt(localStorage.getItem("bb_best")||"0");
+document.getElementById("best-val").textContent=best;
+
+/* ══════════════════════════════════════════════════
+   Responsive cell size
+══════════════════════════════════════════════════ */
 function calcCS(){
   var vw=window.innerWidth, vh=window.innerHeight;
   var availW=Math.min(vw-28,420);
@@ -275,73 +273,85 @@ function calcCS(){
   CS=Math.max(28,Math.min(fromW,fromH,52));
 }
 
-// ── 方塊庫（27種）────────────────────────────────────────────────────────────────
+/* ══════════════════════════════════════════════════
+   Shape Library（27種）
+══════════════════════════════════════════════════ */
 var SHAPES=[
-  // 點
-  {s:[[1]],                          c:"#3b82f6"},
-  // 2格
-  {s:[[1,1]],                        c:"#2dd4bf"},
-  {s:[[1],[1]],                      c:"#2dd4bf"},
-  // 3格
-  {s:[[1,1,1]],                      c:"#4ade80"},
-  {s:[[1],[1],[1]],                  c:"#4ade80"},
-  // 4格
-  {s:[[1,1,1,1]],                    c:"#facc15"},
-  {s:[[1],[1],[1],[1]],              c:"#facc15"},
-  // 5格
-  {s:[[1,1,1,1,1]],                  c:"#f87171"},
-  {s:[[1],[1],[1],[1],[1]],          c:"#f87171"},
-  // 正方形
-  {s:[[1,1],[1,1]],                  c:"#a78bfa"},
-  {s:[[1,1,1],[1,1,1],[1,1,1]],      c:"#ec4899"},
-  // 2x3 / 3x2
-  {s:[[1,1,1],[1,1,1]],              c:"#fb923c"},
-  {s:[[1,1],[1,1],[1,1]],            c:"#fb923c"},
-  // L/J 2格
-  {s:[[1,0],[1,1]],                  c:"#fb923c"},
-  {s:[[0,1],[1,1]],                  c:"#fb923c"},
-  {s:[[1,1],[1,0]],                  c:"#fb923c"},
-  {s:[[1,1],[0,1]],                  c:"#fb923c"},
-  // L/J 3格
-  {s:[[1,0,0],[1,0,0],[1,1,1]],      c:"#fb923c"},
-  {s:[[0,0,1],[0,0,1],[1,1,1]],      c:"#fb923c"},
-  {s:[[1,1,1],[1,0,0],[1,0,0]],      c:"#fb923c"},
-  {s:[[1,1,1],[0,0,1],[0,0,1]],      c:"#fb923c"},
-  // T型
-  {s:[[1,1,1],[0,1,0]],              c:"#facc15"},
-  {s:[[0,1,0],[1,1,1]],              c:"#facc15"},
-  {s:[[1,0],[1,1],[1,0]],            c:"#facc15"},
-  {s:[[0,1],[1,1],[0,1]],            c:"#facc15"},
-  // S/Z型
-  {s:[[1,1,0],[0,1,1]],              c:"#4ade80"},
-  {s:[[0,1,1],[1,1,0]],              c:"#4ade80"},
+  {s:[[1]],c:"#3b82f6"},
+  {s:[[1,1]],c:"#2dd4bf"},{s:[[1],[1]],c:"#2dd4bf"},
+  {s:[[1,1,1]],c:"#4ade80"},{s:[[1],[1],[1]],c:"#4ade80"},
+  {s:[[1,1,1,1]],c:"#facc15"},{s:[[1],[1],[1],[1]],c:"#facc15"},
+  {s:[[1,1,1,1,1]],c:"#f87171"},{s:[[1],[1],[1],[1],[1]],c:"#f87171"},
+  {s:[[1,1],[1,1]],c:"#a78bfa"},
+  {s:[[1,1,1],[1,1,1],[1,1,1]],c:"#ec4899"},
+  {s:[[1,1,1],[1,1,1]],c:"#fb923c"},{s:[[1,1],[1,1],[1,1]],c:"#fb923c"},
+  {s:[[1,0],[1,1]],c:"#fb923c"},{s:[[0,1],[1,1]],c:"#fb923c"},
+  {s:[[1,1],[1,0]],c:"#fb923c"},{s:[[1,1],[0,1]],c:"#fb923c"},
+  {s:[[1,0,0],[1,0,0],[1,1,1]],c:"#fb923c"},{s:[[0,0,1],[0,0,1],[1,1,1]],c:"#fb923c"},
+  {s:[[1,1,1],[1,0,0],[1,0,0]],c:"#fb923c"},{s:[[1,1,1],[0,0,1],[0,0,1]],c:"#fb923c"},
+  {s:[[1,1,1],[0,1,0]],c:"#facc15"},{s:[[0,1,0],[1,1,1]],c:"#facc15"},
+  {s:[[1,0],[1,1],[1,0]],c:"#facc15"},{s:[[0,1],[1,1],[0,1]],c:"#facc15"},
+  {s:[[1,1,0],[0,1,1]],c:"#4ade80"},{s:[[0,1,1],[1,1,0]],c:"#4ade80"},
 ];
-
-function shapeSize(s){
-  var n=0;
-  for(var r=0;r<s.length;r++) for(var c=0;c<s[r].length;c++) if(s[r][c])n++;
-  return n;
+var SMALL_IDX=[], LINE_IDX=[3,4,5,6,7,8];
+for(var _i=0;_i<SHAPES.length;_i++){
+  var _sz=0;
+  for(var _r=0;_r<SHAPES[_i].s.length;_r++)
+    for(var _c=0;_c<SHAPES[_i].s[_r].length;_c++)
+      if(SHAPES[_i].s[_r][_c])_sz++;
+  if(_sz<=4)SMALL_IDX.push(_i);
 }
-var SMALL_IDX=[], LARGE_IDX=[], LINE_IDX=[];
-for(var i=0;i<SHAPES.length;i++){
-  var sz=shapeSize(SHAPES[i].s);
-  if(sz<=4) SMALL_IDX.push(i);
-  else LARGE_IDX.push(i);
-  // 直線條：index 3,4,5,6,7,8
-}
-LINE_IDX=[3,4,5,6,7,8];
 
-// ── State ──────────────────────────────────────────────────────────────────────
-var grid,blocks,score,best,combo;
-var dragging=-1,dragBlock=null,hoverR=null,hoverC=null;
-var noClearStreak=0; // pity timer：連續幾組沒消行
-best=parseInt(localStorage.getItem("bb_best")||"0");
-document.getElementById("best-val").textContent=best;
-
+/* ══════════════════════════════════════════════════
+   Grid init（一次性建 DOM，後續只更新屬性）
+══════════════════════════════════════════════════ */
 function initGrid(){
   grid=[];
   for(var r=0;r<GS;r++){grid.push([]);for(var c=0;c<GS;c++)grid[r].push(null);}
+  var el=document.getElementById("grid");
+  el.innerHTML="";
+  el.style.gridTemplateColumns="repeat("+GS+","+CS+"px)";
+  el.style.gridTemplateRows="repeat("+GS+","+CS+"px)";
+  el.style.gap=GAP+"px";
+  for(var i=0;i<GS*GS;i++){
+    var cell=document.createElement("div");
+    cell.className="cell";
+    cell.id="c"+Math.floor(i/GS)+"-"+(i%GS);
+    cell.style.width=CS+"px";
+    cell.style.height=CS+"px";
+    el.appendChild(cell);
+  }
+  applyHeaderWidth();
 }
+
+/* 局部更新：只改有差異的格子，不碰 DOM 結構 */
+function updateGridDisplay(){
+  for(var r=0;r<GS;r++) for(var c=0;c<GS;c++){
+    var cell=document.getElementById("c"+r+"-"+c);
+    if(!cell)continue;
+    if(grid[r][c]){
+      if(!cell.classList.contains("filled")){
+        cell.classList.add("filled");
+        cell.style.background=grid[r][c];
+      }
+    } else {
+      if(cell.classList.contains("filled")){
+        cell.classList.remove("filled");
+        cell.style.background="";
+      }
+    }
+  }
+}
+
+function applyHeaderWidth(){
+  var w=GS*CS+(GS-1)*GAP+12;
+  document.getElementById("header").style.width=w+"px";
+  document.getElementById("tray").style.width=w+"px";
+}
+
+/* ══════════════════════════════════════════════════
+   Placement helpers
+══════════════════════════════════════════════════ */
 function canPlace(shape,row,col){
   for(var r=0;r<shape.length;r++) for(var c=0;c<shape[r].length;c++){
     if(!shape[r][c])continue;
@@ -363,172 +373,128 @@ function checkGameOver(){
   }
   return true;
 }
-
-// ── 盤面分析：找「快滿」的行列 ────────────────────────────────────────────────
-function getNearFullLines(){
-  var rows=[], cols=[];
-  for(var r=0;r<GS;r++){
-    var filled=0;
-    for(var c=0;c<GS;c++) if(grid[r][c])filled++;
-    var gap=GS-filled;
-    if(gap>0 && gap<=3) rows.push({r:r, gap:gap});
+function shuffle(arr){
+  for(var i=arr.length-1;i>0;i--){
+    var j=Math.floor(Math.random()*(i+1));
+    var t=arr[i];arr[i]=arr[j];arr[j]=t;
   }
-  for(var c=0;c<GS;c++){
-    var filled=0;
-    for(var r=0;r<GS;r++) if(grid[r][c])filled++;
-    var gap=GS-filled;
-    if(gap>0 && gap<=3) cols.push({c:c, gap:gap});
-  }
-  // 排序：gap 最小的優先
-  rows.sort(function(a,b){return a.gap-b.gap;});
-  cols.sort(function(a,b){return a.gap-b.gap;});
-  return {rows:rows, cols:cols};
 }
 
-// 這個方塊能否填滿某個「快滿的行」的所有空格
-function canCompleteAnyLine(shape, nearFull){
-  // 檢查行
-  for(var ri=0;ri<nearFull.rows.length;ri++){
-    var targetR=nearFull.rows[ri].r;
-    // 找行裡的空格位置
-    var emptyCols=[];
-    for(var c=0;c<GS;c++) if(!grid[targetR][c]) emptyCols.push(c);
-    // 看能不能放一個方塊覆蓋到這些格（允許方塊也覆蓋其他空格，只要這行全蓋到）
-    if(shape.length===1){
-      // 橫向方塊：看寬度
+/* ══════════════════════════════════════════════════
+   盤面分析
+══════════════════════════════════════════════════ */
+function getNearFullLines(){
+  var rows=[],cols=[];
+  for(var r=0;r<GS;r++){
+    var f=0; for(var c=0;c<GS;c++) if(grid[r][c])f++;
+    var g=GS-f; if(g>0&&g<=3)rows.push({r:r,gap:g});
+  }
+  for(var c=0;c<GS;c++){
+    var f=0; for(var r=0;r<GS;r++) if(grid[r][c])f++;
+    var g=GS-f; if(g>0&&g<=3)cols.push({c:c,gap:g});
+  }
+  rows.sort(function(a,b){return a.gap-b.gap;});
+  cols.sort(function(a,b){return a.gap-b.gap;});
+  return{rows:rows,cols:cols};
+}
+
+function canCompleteAnyLine(shape,nearFull){
+  if(shape.length===1){
+    for(var ri=0;ri<nearFull.rows.length;ri++){
+      var tR=nearFull.rows[ri].r;
+      var emptyCols=[];
+      for(var c=0;c<GS;c++) if(!grid[tR][c])emptyCols.push(c);
       var w=shape[0].length;
       for(var sc=0;sc<=GS-w;sc++){
-        var covers={};
-        for(var cc=0;cc<w;cc++) if(shape[0][cc]) covers[sc+cc]=1;
-        var allCovered=true;
-        for(var k=0;k<emptyCols.length;k++) if(!covers[emptyCols[k]]){allCovered=false;break;}
-        if(allCovered && canPlace(shape,targetR,sc)) return true;
+        var cov={};
+        for(var cc=0;cc<w;cc++) if(shape[0][cc])cov[sc+cc]=1;
+        var ok=true;
+        for(var k=0;k<emptyCols.length;k++) if(!cov[emptyCols[k]]){ok=false;break;}
+        if(ok&&canPlace(shape,tR,sc))return true;
       }
     }
   }
-  // 檢查列（轉置邏輯）
-  for(var ci=0;ci<nearFull.cols.length;ci++){
-    var targetC=nearFull.cols[ci].c;
-    var emptyRows=[];
-    for(var r=0;r<GS;r++) if(!grid[r][targetC]) emptyRows.push(r);
-    if(shape[0].length===1){
+  if(shape[0].length===1){
+    for(var ci=0;ci<nearFull.cols.length;ci++){
+      var tC=nearFull.cols[ci].c;
+      var emptyRows=[];
+      for(var r=0;r<GS;r++) if(!grid[r][tC])emptyRows.push(r);
       var h=shape.length;
       for(var sr=0;sr<=GS-h;sr++){
-        var covers={};
-        for(var rr=0;rr<h;rr++) if(shape[rr][0]) covers[sr+rr]=1;
-        var allCovered=true;
-        for(var k=0;k<emptyRows.length;k++) if(!covers[emptyRows[k]]){allCovered=false;break;}
-        if(allCovered && canPlace(shape,sr,targetC)) return true;
+        var cov={};
+        for(var rr=0;rr<h;rr++) if(shape[rr][0])cov[sr+rr]=1;
+        var ok=true;
+        for(var k=0;k<emptyRows.length;k++) if(!cov[emptyRows[k]]){ok=false;break;}
+        if(ok&&canPlace(shape,sr,tC))return true;
       }
     }
   }
   return false;
 }
 
-// ── 智慧生成（盤面感知 + pity timer）────────────────────────────────────────────
+/* ══════════════════════════════════════════════════
+   智慧生成（盤面感知 + Pity Timer）
+══════════════════════════════════════════════════ */
 function generateSmartBlocks(){
   var emptyCount=0;
   for(var r=0;r<GS;r++) for(var c=0;c<GS;c++) if(!grid[r][c])emptyCount++;
-
   var nearFull=getNearFullLines();
   var hasNearFull=nearFull.rows.length>0||nearFull.cols.length>0;
-  var isPity=noClearStreak>=2; // 連續2組沒消行，觸發pity
-
-  var result=[];
-  var guaranteedLine=false; // 這組裡至少給一個「能消行」的方塊
+  var isPity=noClearStreak>=2;
+  var result=[], guaranteedLine=false;
 
   for(var i=0;i<3;i++){
     var block=null, attempts=0;
-
     while(attempts<50){
-      var idx;
-      var candidate;
+      var idx, cand;
 
-      // ① Pity timer：強制給長條
-      if(isPity && !guaranteedLine && attempts<20){
+      // ① Pity：連續2組沒消行 → 強制長條
+      if(isPity&&!guaranteedLine&&attempts<20){
         idx=LINE_IDX[Math.floor(Math.random()*LINE_IDX.length)];
-        candidate=SHAPES[idx];
-        if(canFitAnywhere(candidate.s)){
-          block={shape:candidate.s, color:candidate.c, _lineHelper:true};
-          guaranteedLine=true;
-          break;
+        cand=SHAPES[idx];
+        if(canFitAnywhere(cand.s)){
+          block={shape:cand.s,color:cand.c};
+          guaranteedLine=true; break;
         }
         attempts++; continue;
       }
 
-      // ② 盤面感知：有快滿的行列，優先給能完成它的方塊
-      if(hasNearFull && !guaranteedLine && Math.random()<0.55 && attempts<25){
-        // 優先掃線條方塊
-        var linePool=LINE_IDX.slice();
-        shuffle(linePool);
+      // ② 盤面感知：有快滿行列 → 55%機率給能填滿的長條
+      if(hasNearFull&&!guaranteedLine&&Math.random()<0.55&&attempts<25){
+        var pool=LINE_IDX.slice(); shuffle(pool);
         var found=false;
-        for(var li=0;li<linePool.length;li++){
-          candidate=SHAPES[linePool[li]];
-          if(canFitAnywhere(candidate.s) && canCompleteAnyLine(candidate.s,nearFull)){
-            block={shape:candidate.s, color:candidate.c, _lineHelper:true};
-            guaranteedLine=true;
-            found=true;
-            break;
+        for(var li=0;li<pool.length;li++){
+          cand=SHAPES[pool[li]];
+          if(canFitAnywhere(cand.s)&&canCompleteAnyLine(cand.s,nearFull)){
+            block={shape:cand.s,color:cand.c};
+            guaranteedLine=true; found=true; break;
           }
         }
-        if(found) break;
+        if(found)break;
       }
 
-      // ③ 空格少時強制小方塊
-      if(emptyCount<18 && attempts<20){
+      // ③ 格子少 → 強制小方塊
+      if(emptyCount<18&&attempts<20){
         idx=SMALL_IDX[Math.floor(Math.random()*SMALL_IDX.length)];
+      } else {
+        // ④ 一般隨機（65%小，35%全庫）
+        idx=Math.random()<0.65
+          ?SMALL_IDX[Math.floor(Math.random()*SMALL_IDX.length)]
+          :Math.floor(Math.random()*SHAPES.length);
       }
-      // ④ 一般隨機（偏小）
-      else{
-        // 小方塊 65%，大方塊 35%
-        if(Math.random()<0.65)
-          idx=SMALL_IDX[Math.floor(Math.random()*SMALL_IDX.length)];
-        else
-          idx=Math.floor(Math.random()*SHAPES.length);
-      }
-
-      candidate=SHAPES[idx];
-      if(canFitAnywhere(candidate.s)){
-        block={shape:candidate.s, color:candidate.c};
-        break;
-      }
+      cand=SHAPES[idx];
+      if(canFitAnywhere(cand.s)){block={shape:cand.s,color:cand.c};break;}
       attempts++;
     }
-
-    if(!block) block={shape:SHAPES[0].s, color:SHAPES[0].c}; // 最終保底 1x1
+    if(!block)block={shape:SHAPES[0].s,color:SHAPES[0].c};
     result.push(block);
   }
   return result;
 }
 
-function shuffle(arr){
-  for(var i=arr.length-1;i>0;i--){
-    var j=Math.floor(Math.random()*(i+1));
-    var tmp=arr[i]; arr[i]=arr[j]; arr[j]=tmp;
-  }
-}
-
-// ── Render ─────────────────────────────────────────────────────────────────────
-function applySize(){
-  var totalW=GS*CS+(GS-1)*GAP+12;
-  document.getElementById("header").style.width=totalW+"px";
-  document.getElementById("tray").style.width=totalW+"px";
-}
-function renderGrid(){
-  var el=document.getElementById("grid");
-  el.innerHTML="";
-  el.style.gridTemplateColumns="repeat("+GS+","+CS+"px)";
-  el.style.gridTemplateRows="repeat("+GS+","+CS+"px)";
-  applySize();
-  for(var r=0;r<GS;r++) for(var c=0;c<GS;c++){
-    var cell=document.createElement("div");
-    cell.className="cell"+(grid[r][c]?" filled":"");
-    cell.id="c"+r+"-"+c;
-    cell.style.width=CS+"px"; cell.style.height=CS+"px";
-    if(grid[r][c]) cell.style.background=grid[r][c];
-    el.appendChild(cell);
-  }
-}
+/* ══════════════════════════════════════════════════
+   Tray render
+══════════════════════════════════════════════════ */
 function renderTray(){
   var tray=document.getElementById("tray");
   tray.innerHTML="";
@@ -548,12 +514,12 @@ function renderTray(){
         var bc=document.createElement("div");
         bc.className="mini-cell"+(b.shape[r][c]?" filled":"");
         bc.style.width=mcs+"px"; bc.style.height=mcs+"px";
-        if(b.shape[r][c]) bc.style.background=b.color;
+        if(b.shape[r][c])bc.style.background=b.color;
         mg.appendChild(bc);
       }
       slot.appendChild(mg);
       (function(idx){
-        slot.addEventListener("mousedown",function(e){startDrag(idx,e.clientX,e.clientY);});
+        slot.addEventListener("mousedown",function(e){e.preventDefault();startDrag(idx,e.clientX,e.clientY);});
         slot.addEventListener("touchstart",function(e){e.preventDefault();startDrag(idx,e.touches[0].clientX,e.touches[0].clientY);},{passive:false});
       })(i);
     }
@@ -561,15 +527,21 @@ function renderTray(){
   }
 }
 
-// ── Ghost ──────────────────────────────────────────────────────────────────────
+/* ══════════════════════════════════════════════════
+   Ghost（棋盤預覽）
+══════════════════════════════════════════════════ */
 var ghostIds=[];
 function clearGhost(){
   ghostIds.forEach(function(id){
     var cell=document.getElementById(id);
     if(!cell)return;
-    var parts=id.replace("c","").split("-");
-    var r=parseInt(parts[0]),c=parseInt(parts[1]);
-    cell.style.background=grid[r][c]?grid[r][c]:"";
+    var p=id.replace("c","").split("-");
+    var r=parseInt(p[0]),c=parseInt(p[1]);
+    if(grid[r][c]){
+      cell.classList.add("filled"); cell.style.background=grid[r][c];
+    } else {
+      cell.classList.remove("filled"); cell.style.background="";
+    }
     cell.style.outline=""; cell.style.outlineOffset="";
   });
   ghostIds=[];
@@ -597,8 +569,10 @@ function renderGhost(){
   }
 }
 
-// ── Drag ───────────────────────────────────────────────────────────────────────
-function buildGhost(block){
+/* ══════════════════════════════════════════════════
+   Drag（懸浮方塊 + rAF 節流）
+══════════════════════════════════════════════════ */
+function buildDragGhost(block){
   var ghost=document.getElementById("drag-ghost");
   ghost.innerHTML="";
   var rows=block.shape.length,cols=block.shape[0].length;
@@ -610,54 +584,64 @@ function buildGhost(block){
     var bc=document.createElement("div");
     bc.style.width=CS+"px"; bc.style.height=CS+"px";
     if(block.shape[r][c]){
-      bc.className="ghost-cell";
-      bc.style.background=block.color;
-      bc.style.opacity="0.92";
+      bc.className="ghost-cell"; bc.style.background=block.color; bc.style.opacity="0.92";
     }
     mg.appendChild(bc);
   }
   ghost.appendChild(mg);
   ghost.style.display="block";
 }
-function posGhost(cx,cy){
+
+function moveDragGhost(cx,cy){
   if(!dragBlock)return;
   var cols=dragBlock.shape[0].length,rows=dragBlock.shape.length;
   var w=cols*CS+(cols-1)*GAP,h=rows*CS+(rows-1)*GAP;
-  var g=document.getElementById("drag-ghost");
-  g.style.left=(cx-w/2)+"px";
-  g.style.top=(cy-h-56)+"px";
+  /* 用 transform 代替 left/top → GPU 合成層，不觸發 layout */
+  document.getElementById("drag-ghost").style.transform=
+    "translate3d("+(cx-w/2)+"px,"+(cy-h-56)+"px,0)";
 }
-function getAnchor(cx,cy){
+
+function getGridAnchor(cx,cy){
   var rect=document.getElementById("grid").getBoundingClientRect();
   var cols=dragBlock.shape[0].length,rows=dragBlock.shape.length;
-  var bw=cols*CS+(cols-1)*GAP,bh=rows*CS+(rows-1)*GAP;
-  var rx=cx-rect.left-bw/2,ry=cy-rect.top-bh-56;
+  var bw=cols*CS+(cols-1)*GAP, bh=rows*CS+(rows-1)*GAP;
+  var rx=cx-rect.left-bw/2, ry=cy-rect.top-bh-56;
   return{row:Math.round(ry/(CS+GAP)),col:Math.round(rx/(CS+GAP))};
 }
+
 function startDrag(idx,cx,cy){
   if(!blocks[idx])return;
   dragging=idx; dragBlock=blocks[idx];
   var sl=document.querySelector(".block-slot[data-idx='"+idx+"']");
   if(sl)sl.classList.add("dragging");
-  buildGhost(dragBlock); posGhost(cx,cy);
-  var a=getAnchor(cx,cy); hoverR=a.row; hoverC=a.col; renderGhost();
+  buildDragGhost(dragBlock);
+  moveDragGhost(cx,cy);
+  var a=getGridAnchor(cx,cy); hoverR=a.row; hoverC=a.col; renderGhost();
 }
-window.addEventListener("mousemove",function(e){
+
+function onMove(cx,cy){
   if(dragging<0)return;
-  posGhost(e.clientX,e.clientY);
-  var a=getAnchor(e.clientX,e.clientY); hoverR=a.row; hoverC=a.col; renderGhost();
-});
+  if(rafId)cancelAnimationFrame(rafId);
+  rafId=requestAnimationFrame(function(){
+    moveDragGhost(cx,cy);
+    var a=getGridAnchor(cx,cy);
+    if(a.row!==hoverR||a.col!==hoverC){hoverR=a.row;hoverC=a.col;renderGhost();}
+    rafId=null;
+  });
+}
+
+window.addEventListener("mousemove",function(e){onMove(e.clientX,e.clientY);});
 window.addEventListener("touchmove",function(e){
-  if(dragging<0)return; e.preventDefault();
-  var t=e.touches[0];
-  posGhost(t.clientX,t.clientY);
-  var a=getAnchor(t.clientX,t.clientY); hoverR=a.row; hoverC=a.col; renderGhost();
+  e.preventDefault(); onMove(e.touches[0].clientX,e.touches[0].clientY);
 },{passive:false});
 window.addEventListener("mouseup",function(e){if(dragging>=0)drop(e.clientX,e.clientY);});
 window.addEventListener("touchend",function(e){if(dragging>=0)drop(e.changedTouches[0].clientX,e.changedTouches[0].clientY);});
 
-// ── Drop ───────────────────────────────────────────────────────────────────────
+/* ══════════════════════════════════════════════════
+   Drop
+══════════════════════════════════════════════════ */
 function drop(cx,cy){
+  if(rafId){cancelAnimationFrame(rafId);rafId=null;}
   document.getElementById("drag-ghost").style.display="none";
   var sl=document.querySelector(".block-slot[data-idx='"+dragging+"']");
   if(sl)sl.classList.remove("dragging");
@@ -665,20 +649,21 @@ function drop(cx,cy){
 
   if(!canPlace(dragBlock.shape,hoverR,hoverC)){
     dragging=-1; dragBlock=null; hoverR=null; hoverC=null;
-    var w=document.getElementById("grid-wrap");
-    w.classList.add("shake"); setTimeout(function(){w.classList.remove("shake");},320);
+    var gw=document.getElementById("grid-wrap");
+    gw.classList.add("shake"); setTimeout(function(){gw.classList.remove("shake");},320);
     return;
   }
 
-  var bc=0, savedR=hoverR, savedC=hoverC;
-  var savedShape=dragBlock.shape, savedColor=dragBlock.color;
+  var savedR=hoverR,savedC=hoverC,savedShape=dragBlock.shape,savedColor=dragBlock.color;
+  var bc=0;
   for(var r=0;r<dragBlock.shape.length;r++) for(var c=0;c<dragBlock.shape[r].length;c++){
-    if(dragBlock.shape[r][c]){ grid[savedR+r][savedC+c]=dragBlock.color; bc++; }
+    if(dragBlock.shape[r][c]){grid[savedR+r][savedC+c]=dragBlock.color;bc++;}
   }
   var idx=dragging;
   dragging=-1; dragBlock=null; hoverR=null; hoverC=null;
 
-  renderGrid();
+  updateGridDisplay();
+
   // 放置彈入動畫
   for(var r=0;r<savedShape.length;r++) for(var c=0;c<savedShape[r].length;c++){
     if(!savedShape[r][c])continue;
@@ -693,14 +678,14 @@ function drop(cx,cy){
   updateScore(false);
 
   blocks[idx]=null;
-  if(blocks.every(function(b){return b===null;}))
-    blocks=generateSmartBlocks();
+  if(blocks.every(function(b){return b===null;}))blocks=generateSmartBlocks();
   renderTray();
-
   processClears(savedR,savedC);
 }
 
-// ── Clear Lines ────────────────────────────────────────────────────────────────
+/* ══════════════════════════════════════════════════
+   Clear Lines
+══════════════════════════════════════════════════ */
 function processClears(dropR,dropC){
   var rc=[],cc=[];
   for(var r=0;r<GS;r++){
@@ -714,58 +699,47 @@ function processClears(dropR,dropC){
     if(full)cc.push(c);
   }
 
-  var lines=rc.length+cc.length;
-  if(lines===0){
-    combo=0;
-    noClearStreak++; // pity timer 累積
+  if(rc.length+cc.length===0){
+    combo=0; noClearStreak++;
     updateComboDisplay();
     setTimeout(function(){if(checkGameOver())showGameOver();},50);
     return;
   }
 
-  // 有消行 → pity reset
-  noClearStreak=0;
-  combo++;
+  noClearStreak=0; combo++;
 
-  // ── 分數公式：格數×10×(1+combo×0.5) ──
-  // 先算唯一格數（去掉交叉重複）
+  // 分數：唯一格數 × 10 × (1 + combo×0.5)
   var fs={};
   for(var i=0;i<rc.length;i++) for(var c=0;c<GS;c++) fs["c"+rc[i]+"-"+c]=1;
   for(var i=0;i<cc.length;i++) for(var r=0;r<GS;r++) fs["c"+r+"-"+cc[i]]=1;
   var keys=Object.keys(fs);
-  var multiplier=1+combo*0.5;
-  var clearScore=Math.round(keys.length*10*multiplier);
+  var clearScore=Math.round(keys.length*10*(1+combo*0.5));
   score+=clearScore;
   updateScore(true);
   updateComboDisplay();
+  spawnFX(dropR,dropC,clearScore,combo,rc.length+cc.length);
 
-  spawnFX(dropR,dropC,clearScore,combo,lines);
-
-  // 記錄顏色
+  // 記錄消除格顏色
   var colorMap={};
   keys.forEach(function(id){
     var el=document.getElementById(id);
-    if(el) colorMap[id]=el.style.background||"#38bdf8";
+    if(el)colorMap[id]=el.style.background||"#38bdf8";
   });
 
-  // 光掃效果
+  // 光掃
   var wrap=document.getElementById("grid-wrap");
   for(var i=0;i<rc.length;i++){
     (function(row){
-      var sw=document.createElement("div");
-      sw.className="sweep";
-      sw.style.top=(6+row*(CS+GAP))+"px";
-      sw.style.height=CS+"px";
+      var sw=document.createElement("div"); sw.className="sweep";
+      sw.style.top=(6+row*(CS+GAP))+"px"; sw.style.height=CS+"px";
       wrap.appendChild(sw);
       setTimeout(function(){if(sw.parentNode)sw.parentNode.removeChild(sw);},400);
     })(rc[i]);
   }
   for(var i=0;i<cc.length;i++){
     (function(col){
-      var sw=document.createElement("div");
-      sw.className="sweep-col";
-      sw.style.left=(6+col*(CS+GAP))+"px";
-      sw.style.width=CS+"px";
+      var sw=document.createElement("div"); sw.className="sweep-col";
+      sw.style.left=(6+col*(CS+GAP))+"px"; sw.style.width=CS+"px";
       wrap.appendChild(sw);
       setTimeout(function(){if(sw.parentNode)sw.parentNode.removeChild(sw);},400);
     })(cc[i]);
@@ -776,8 +750,8 @@ function processClears(dropR,dropC){
     var el=document.getElementById(id);
     if(!el)return;
     el.classList.add("clearing");
-    var parts=id.replace("c","").split("-");
-    var dist=Math.abs(parseInt(parts[0])-GS/2)+Math.abs(parseInt(parts[1])-GS/2);
+    var p=id.replace("c","").split("-");
+    var dist=Math.abs(parseInt(p[0])-GS/2)+Math.abs(parseInt(p[1])-GS/2);
     el.style.animationDelay=(dist*0.012)+"s";
   });
 
@@ -789,37 +763,45 @@ function processClears(dropR,dropC){
       if(!groups[col])groups[col]=[];
       groups[col].push(id);
     });
-    Object.keys(groups).forEach(function(col){ spawnParticles(groups[col],col); });
+    Object.keys(groups).forEach(function(col){spawnParticles(groups[col],col);});
   },60);
 
-  // 清格子
+  // 清格子 + 更新 DOM
   setTimeout(function(){
     for(var i=0;i<rc.length;i++) for(var c=0;c<GS;c++) grid[rc[i]][c]=null;
     for(var i=0;i<cc.length;i++) for(var r=0;r<GS;r++) grid[r][cc[i]]=null;
+    keys.forEach(function(id){
+      var el=document.getElementById(id);
+      if(el){el.classList.remove("clearing");el.style.animationDelay="";}
+    });
+    updateGridDisplay();
+
+    // 全清
     var isEmpty=true;
     for(var r=0;r<GS&&isEmpty;r++) for(var c=0;c<GS&&isEmpty;c++) if(grid[r][c])isEmpty=false;
-    renderGrid();
-    if(isEmpty){ score+=500; updateScore(true); showAllClear(); }
+    if(isEmpty){score+=500;updateScore(true);showAllClear();}
+
     setTimeout(function(){if(checkGameOver())showGameOver();},60);
   },310);
 }
 
-// ── Effects ────────────────────────────────────────────────────────────────────
+/* ══════════════════════════════════════════════════
+   Effects
+══════════════════════════════════════════════════ */
 function spawnParticles(cells,color){
   cells.forEach(function(id){
     var el=document.getElementById(id);
     if(!el)return;
     var rect=el.getBoundingClientRect();
     var cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
-    var count=5+Math.floor(Math.random()*4);
-    for(var i=0;i<count;i++){
+    for(var i=0;i<(5+Math.floor(Math.random()*4));i++){
       var p=document.createElement("div");
       p.className="particle";
       var sz=3+Math.random()*6;
       p.style.width=sz+"px"; p.style.height=sz+"px";
       p.style.background=color;
       p.style.boxShadow="0 0 6px "+color+",0 0 12px "+color+"80";
-      var angle=Math.random()*Math.PI*2,dist=20+Math.random()*55;
+      var angle=Math.random()*Math.PI*2, dist=20+Math.random()*55;
       p.style.setProperty("--tx",Math.cos(angle)*dist+"px");
       p.style.setProperty("--ty",Math.sin(angle)*dist+"px");
       p.style.left=(cx-sz/2)+"px"; p.style.top=(cy-sz/2)+"px";
@@ -833,11 +815,10 @@ function spawnParticles(cells,color){
 
 function spawnFX(r,c,pts,cb,lines){
   var wrap=document.getElementById("grid-wrap");
-  var px=(c*(CS+GAP))+CS/2+6;
-  var py=(r*(CS+GAP))+CS/2+6;
   var div=document.createElement("div");
   div.className="fx-text";
-  div.style.left=px+"px"; div.style.top=py+"px";
+  div.style.left=(c*(CS+GAP)+CS/2+6)+"px";
+  div.style.top=(r*(CS+GAP)+CS/2+6)+"px";
   var msgs=["","","Good!","Great!","Excellent!","Amazing!","Perfect!","Legendary!"];
   var html="";
   if(cb>1) html+='<div class="fx-combo">COMBO '+cb+'×</div>';
@@ -887,18 +868,33 @@ function showGameOver(){
   document.getElementById("go-best").textContent="Best: "+best;
   document.getElementById("gameover").style.display="flex";
 }
+
+/* ══════════════════════════════════════════════════
+   Reset & Boot
+══════════════════════════════════════════════════ */
 function resetGame(){
   document.getElementById("gameover").style.display="none";
   score=0; combo=0; noClearStreak=0;
   document.getElementById("score-val").textContent=0;
   document.getElementById("combo-val").style.display="none";
-  initGrid();
+  calcCS(); initGrid();
   blocks=generateSmartBlocks();
-  renderGrid(); renderTray();
+  renderTray();
 }
 
 window.addEventListener("DOMContentLoaded",function(){calcCS();resetGame();});
-window.addEventListener("resize",function(){calcCS();renderGrid();renderTray();});
+window.addEventListener("resize",function(){
+  calcCS();
+  var el=document.getElementById("grid");
+  el.style.gridTemplateColumns="repeat("+GS+","+CS+"px)";
+  el.style.gridTemplateRows="repeat("+GS+","+CS+"px)";
+  for(var i=0;i<GS*GS;i++){
+    var r=Math.floor(i/GS),c=i%GS;
+    var cell=document.getElementById("c"+r+"-"+c);
+    if(cell){cell.style.width=CS+"px";cell.style.height=CS+"px";}
+  }
+  applyHeaderWidth(); renderTray();
+});
 </script>
 </body>
 </html>
