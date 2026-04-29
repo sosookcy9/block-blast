@@ -12,85 +12,65 @@
 * { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-user-select:none; -webkit-tap-highlight-color:transparent; }
 html,body { width:100%; height:100%; }
 body {
-  height:100vh;
-  height:-webkit-fill-available;
+  height:100vh; height:-webkit-fill-available;
   background:#0a0a14;
   display:flex; flex-direction:column; align-items:center; justify-content:center;
   font-family:-apple-system,'Helvetica Neue',sans-serif;
   overflow:hidden;
 }
 body::before {
-  content:'';
-  position:fixed; inset:0;
+  content:''; position:fixed; inset:0;
   background:radial-gradient(ellipse 80% 50% at 50% 0%,rgba(99,102,241,0.18) 0%,transparent 70%),
              radial-gradient(ellipse 60% 40% at 80% 100%,rgba(236,72,153,0.09) 0%,transparent 60%);
   pointer-events:none;
 }
-
-#game {
-  display:flex; flex-direction:column; align-items:center;
-  /* JS will set transform scale */
-}
-
 #title {
   font-size:24px; font-weight:900; letter-spacing:3px;
   background:linear-gradient(135deg,#fff 0%,#a5b4fc 100%);
   -webkit-background-clip:text; -webkit-text-fill-color:transparent;
   margin-bottom:10px;
 }
-
 #scores { display:flex; gap:10px; margin-bottom:8px; }
 .score-box {
-  background:rgba(255,255,255,0.07);
-  border:1px solid rgba(255,255,255,0.12);
-  border-radius:14px; padding:6px 20px; text-align:center;
-  -webkit-backdrop-filter:blur(20px); backdrop-filter:blur(20px);
-  min-width:90px;
+  background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.12);
+  border-radius:14px; padding:6px 20px; text-align:center; min-width:90px;
 }
 .score-box.gold { border-color:rgba(251,191,36,0.3); background:rgba(251,191,36,0.07); }
 .score-label { font-size:9px; color:rgba(255,255,255,0.4); font-weight:700; letter-spacing:2px; }
 .score-label.gold { color:rgba(251,191,36,0.7); }
 .score-value { font-size:24px; font-weight:900; color:#fff; line-height:1.1; }
 .score-value.gold { color:#fbbf24; }
-
 #combo-text { color:#a5b4fc; font-size:12px; font-weight:700; height:16px; text-align:center; margin-bottom:6px; letter-spacing:1px; }
-
 #grid-wrap {
-  background:rgba(255,255,255,0.04);
-  border-radius:18px; padding:6px;
+  background:rgba(255,255,255,0.04); border-radius:18px; padding:6px;
   border:1px solid rgba(255,255,255,0.08);
   box-shadow:0 20px 60px rgba(0,0,0,0.6),0 0 0 1px rgba(255,255,255,0.04) inset;
 }
 #grid { display:grid; gap:3px; }
-
 .cell {
   border-radius:9px;
   background:rgba(255,255,255,0.05);
   border:1px solid rgba(255,255,255,0.07);
   position:relative;
-  -webkit-transition:background 0.08s,-webkit-transform 0.08s;
-  transition:background 0.08s,transform 0.08s;
 }
 .cell.filled { box-shadow:0 2px 6px rgba(0,0,0,0.3),0 1px 0 rgba(255,255,255,0.15) inset; }
+/* ghost highlight — no red border leaks */
+.cell.ghost-valid { outline:2px solid var(--gc); outline-offset:-2px; }
+.cell.ghost-invalid { background:rgba(248,113,113,0.18) !important; outline:1px solid rgba(248,113,113,0.35); outline-offset:-1px; }
 
 @-webkit-keyframes cellPop {
-  0%{-webkit-transform:scale(1);opacity:1}
-  30%{-webkit-transform:scale(1.15);opacity:1}
-  65%{-webkit-transform:scale(0.65);opacity:0.5}
-  100%{-webkit-transform:scale(0);opacity:0}
+  0%{-webkit-transform:scale(1);opacity:1} 30%{-webkit-transform:scale(1.12);opacity:1}
+  65%{-webkit-transform:scale(0.6);opacity:0.4} 100%{-webkit-transform:scale(0);opacity:0}
 }
 @keyframes cellPop {
-  0%{transform:scale(1);opacity:1}
-  30%{transform:scale(1.15);opacity:1}
-  65%{transform:scale(0.65);opacity:0.5}
-  100%{transform:scale(0);opacity:0}
+  0%{transform:scale(1);opacity:1} 30%{transform:scale(1.12);opacity:1}
+  65%{transform:scale(0.6);opacity:0.4} 100%{transform:scale(0);opacity:0}
 }
 .cell.clearing {
-  -webkit-animation:cellPop 0.35s cubic-bezier(.36,.07,.19,.97) forwards;
-  animation:cellPop 0.35s cubic-bezier(.36,.07,.19,.97) forwards;
+  -webkit-animation:cellPop 0.34s cubic-bezier(.36,.07,.19,.97) forwards;
+  animation:cellPop 0.34s cubic-bezier(.36,.07,.19,.97) forwards;
   z-index:10;
 }
-
 .particle {
   position:fixed; pointer-events:none; z-index:200;
   border-radius:50%; width:6px; height:6px;
@@ -105,33 +85,27 @@ body::before {
   0%{transform:translate(0,0) scale(1);opacity:1}
   100%{transform:translate(var(--tx),var(--ty)) scale(0);opacity:0}
 }
-
 @keyframes shake {
-  0%,100%{transform:translateX(0)}
-  20%{transform:translateX(-5px)} 40%{transform:translateX(5px)}
-  60%{transform:translateX(-3px)} 80%{transform:translateX(3px)}
+  0%,100%{transform:translateX(0)} 20%{transform:translateX(-5px)}
+  40%{transform:translateX(5px)} 60%{transform:translateX(-3px)} 80%{transform:translateX(3px)}
 }
 .shake { animation:shake 0.35s ease; }
-
 #tray {
   display:flex; gap:12px; margin-top:10px;
-  background:rgba(255,255,255,0.05);
-  border-radius:20px; padding:10px 16px;
+  background:rgba(255,255,255,0.05); border-radius:20px; padding:10px 16px;
   border:1px solid rgba(255,255,255,0.08);
 }
 .block-slot {
   width:76px; height:76px; display:flex; align-items:center; justify-content:center;
-  cursor:grab; -webkit-transition:opacity 0.2s,-webkit-transform 0.15s; transition:opacity 0.2s,transform 0.15s;
-  border-radius:12px;
+  cursor:grab; border-radius:12px;
+  -webkit-transition:opacity 0.2s; transition:opacity 0.2s;
 }
 .block-slot.dragging { opacity:0.2; }
 .block-slot.used { opacity:0; pointer-events:none; }
 .mini-grid { display:grid; gap:2px; }
 .mini-cell { border-radius:4px; }
-
 #drag-ghost { position:fixed; pointer-events:none; z-index:500; opacity:0.88; display:none; }
 .ghost-cell { border-radius:8px; }
-
 @keyframes comboIn {
   0%{transform:translate(-50%,-50%) scale(0.4);opacity:0}
   35%{transform:translate(-50%,-70%) scale(1.15);opacity:1}
@@ -141,10 +115,8 @@ body::before {
 #combo-popup { position:fixed; pointer-events:none; z-index:999; text-align:center; display:none; }
 #combo-popup .line1 { font-size:32px; font-weight:900; color:#fff; text-shadow:0 0 30px #a5b4fc; }
 #combo-popup .line2 { font-size:18px; color:#a5b4fc; font-weight:700; }
-
 @keyframes scoreFloat {
-  0%{transform:translate(-50%,0);opacity:1}
-  100%{transform:translate(-50%,-55px);opacity:0}
+  0%{transform:translate(-50%,0);opacity:1} 100%{transform:translate(-50%,-55px);opacity:0}
 }
 .score-float {
   position:fixed; pointer-events:none; z-index:998;
@@ -153,17 +125,14 @@ body::before {
   -webkit-animation:scoreFloat 0.85s ease-out forwards;
   animation:scoreFloat 0.85s ease-out forwards;
 }
-
 #gameover {
-  position:fixed; inset:0; z-index:100;
-  background:rgba(0,0,0,0.78);
+  position:fixed; inset:0; z-index:100; background:rgba(0,0,0,0.78);
   -webkit-backdrop-filter:blur(20px); backdrop-filter:blur(20px);
   display:none; flex-direction:column; align-items:center; justify-content:center;
 }
 @keyframes pop { 0%{transform:scale(0.6);opacity:0} 60%{transform:scale(1.05)} 100%{transform:scale(1);opacity:1} }
 #gameover-box {
-  background:rgba(18,18,30,0.92);
-  border:1px solid rgba(255,255,255,0.12);
+  background:rgba(18,18,30,0.92); border:1px solid rgba(255,255,255,0.12);
   border-radius:28px; padding:36px 48px; text-align:center;
   animation:pop 0.4s cubic-bezier(.34,1.56,.64,1);
   box-shadow:0 30px 80px rgba(0,0,0,0.8);
@@ -173,24 +142,21 @@ body::before {
 .go-score { font-size:52px; font-weight:900; color:#fff; margin-bottom:4px; line-height:1; }
 .go-best { color:rgba(251,191,36,0.7); font-size:13px; margin-bottom:26px; }
 #gameover-box button {
-  background:linear-gradient(135deg,#6366f1,#8b5cf6);
-  border:none; border-radius:16px; padding:14px 44px;
-  font-size:17px; font-weight:700; color:#fff; cursor:pointer;
-  box-shadow:0 8px 24px rgba(99,102,241,0.4);
+  background:linear-gradient(135deg,#6366f1,#8b5cf6); border:none;
+  border-radius:16px; padding:14px 44px; font-size:17px; font-weight:700;
+  color:#fff; cursor:pointer; box-shadow:0 8px 24px rgba(99,102,241,0.4);
 }
 </style>
 </head>
 <body>
-<div id="game">
-  <div id="title">BLOCK BLAST</div>
-  <div id="scores">
-    <div class="score-box"><div class="score-label">SCORE</div><div class="score-value" id="score-val">0</div></div>
-    <div class="score-box gold"><div class="score-label gold">BEST</div><div class="score-value gold" id="best-val">0</div></div>
-  </div>
-  <div id="combo-text"></div>
-  <div id="grid-wrap"><div id="grid"></div></div>
-  <div id="tray"></div>
+<div id="title">BLOCK BLAST</div>
+<div id="scores">
+  <div class="score-box"><div class="score-label">SCORE</div><div class="score-value" id="score-val">0</div></div>
+  <div class="score-box gold"><div class="score-label gold">BEST</div><div class="score-value gold" id="best-val">0</div></div>
 </div>
+<div id="combo-text"></div>
+<div id="grid-wrap"><div id="grid"></div></div>
+<div id="tray"></div>
 <div id="drag-ghost"></div>
 <div id="combo-popup"><div class="line1" id="cp-line1"></div><div class="line2" id="cp-line2"></div></div>
 <div id="gameover">
@@ -202,54 +168,89 @@ body::before {
     <button onclick="resetGame()">Play Again</button>
   </div>
 </div>
-
 <script>
-var GS=8, GAP=3;
-var CS=42; // cell size, will be recalculated
+var GS=8, GAP=3, CS=42;
 
-// Responsive: calculate cell size to fit screen
-function calcCellSize(){
-  var vw=window.innerWidth, vh=window.innerHeight;
-  // total height needed: title~34 + scores~52 + combo~24 + tray~98 + margins~50
-  var overhead=258;
-  var gridPad=13; // padding*2 + border*2
-  var availH=vh-overhead;
-  var availW=vw-40; // side margins
-  var maxFromH=Math.floor((availH-gridPad)/GS)-GAP;
-  var maxFromW=Math.floor((availW-gridPad)/GS)-GAP;
-  CS=Math.min(42,Math.max(28,Math.min(maxFromH,maxFromW)));
-}
+// ── Shapes matching original Block Blast ──────────────────────────────────────
+// Colors rotate randomly per block from a palette
+var PALETTE=["#f87171","#fb923c","#fbbf24","#4ade80","#34d399","#38bdf8","#60a5fa","#a78bfa","#f472b6","#e879f9"];
+function rndColor(){ return PALETTE[Math.floor(Math.random()*PALETTE.length)]; }
 
+// Each shape: s=grid, w=weight (higher = more frequent)
 var SHAPES=[
-  {s:[[1]],c:"#f87171",w:4},
-  {s:[[1,1]],c:"#34d399",w:4},
-  {s:[[1],[1]],c:"#34d399",w:4},
-  {s:[[1,1,1]],c:"#60a5fa",w:3},
-  {s:[[1],[1],[1]],c:"#a78bfa",w:3},
-  {s:[[1,0],[1,0],[1,1]],c:"#f472b6",w:3},
-  {s:[[0,1],[0,1],[1,1]],c:"#fb923c",w:3},
-  {s:[[0,1,1],[1,1,0]],c:"#4ade80",w:3},
-  {s:[[1,1,0],[0,1,1]],c:"#38bdf8",w:3},
-  {s:[[1,1],[1,1]],c:"#fde68a",w:2},
-  {s:[[1,1,1],[0,1,0]],c:"#c084fc",w:2},
-  {s:[[1,1,1,1]],c:"#fcd34d",w:2},
-  {s:[[1],[1],[1],[1]],c:"#6ee7b7",w:2},
-  {s:[[1,1],[1,1],[1,1]],c:"#93c5fd",w:2},
-  {s:[[1,1,1],[1,1,1]],c:"#f9a8d4",w:2},
-  {s:[[1,1,1],[1,1,1],[1,1,1]],c:"#e879f9",w:1}
+  // 1-cell
+  {s:[[1]],w:3},
+  // 1×2
+  {s:[[1,1]],w:4},
+  {s:[[1],[1]],w:4},
+  // 1×3
+  {s:[[1,1,1]],w:4},
+  {s:[[1],[1],[1]],w:4},
+  // 1×4
+  {s:[[1,1,1,1]],w:2},
+  {s:[[1],[1],[1],[1]],w:2},
+  // 1×5
+  {s:[[1,1,1,1,1]],w:1},
+  {s:[[1],[1],[1],[1],[1]],w:1},
+  // 2×2
+  {s:[[1,1],[1,1]],w:4},
+  // 3×3
+  {s:[[1,1,1],[1,1,1],[1,1,1]],w:1},
+  // L shapes (2 tall)
+  {s:[[1,0],[1,1]],w:3},
+  {s:[[0,1],[1,1]],w:3},
+  {s:[[1,1],[1,0]],w:3},
+  {s:[[1,1],[0,1]],w:3},
+  // L shapes (3 tall)
+  {s:[[1,0],[1,0],[1,1]],w:3},
+  {s:[[0,1],[0,1],[1,1]],w:3},
+  {s:[[1,1],[1,0],[1,0]],w:3},
+  {s:[[1,1],[0,1],[0,1]],w:3},
+  // L shapes (3 wide)
+  {s:[[1,0,0],[1,1,1]],w:3},
+  {s:[[0,0,1],[1,1,1]],w:3},
+  {s:[[1,1,1],[1,0,0]],w:3},
+  {s:[[1,1,1],[0,0,1]],w:3},
+  // T shapes
+  {s:[[1,1,1],[0,1,0]],w:2},
+  {s:[[0,1,0],[1,1,1]],w:2},
+  {s:[[1,0],[1,1],[1,0]],w:2},
+  {s:[[0,1],[1,1],[0,1]],w:2},
+  // S/Z shapes
+  {s:[[0,1,1],[1,1,0]],w:2},
+  {s:[[1,1,0],[0,1,1]],w:2},
+  {s:[[1,0],[1,1],[0,1]],w:2},
+  {s:[[0,1],[1,1],[1,0]],w:2},
+  // 2×3 / 3×2 rectangles
+  {s:[[1,1],[1,1],[1,1]],w:2},
+  {s:[[1,1,1],[1,1,1]],w:2},
 ];
+
 var POOL=[];
 for(var i=0;i<SHAPES.length;i++) for(var w=0;w<SHAPES[i].w;w++) POOL.push(i);
 
+function randomBlock(){
+  var t=SHAPES[POOL[Math.floor(Math.random()*POOL.length)]];
+  return{shape:t.s, color:rndColor()};
+}
+
+// ── Responsive cell size ───────────────────────────────────────────────────────
+function calcCS(){
+  var vw=window.innerWidth, vh=window.innerHeight;
+  var overhead=260; // title+scores+combo+tray+margins
+  var gridPad=14;
+  var availH=vh-overhead, availW=vw-40;
+  var fromH=Math.floor((availH-gridPad)/GS)-GAP;
+  var fromW=Math.floor((availW-gridPad)/GS)-GAP;
+  CS=Math.min(44,Math.max(28,Math.min(fromH,fromW)));
+}
+
+// ── State ──────────────────────────────────────────────────────────────────────
 var grid,blocks,score,best,combo;
-var dragging=-1,dragBlock=null,hoverR=null,hoverC=null;
+var dragging=-1, dragBlock=null, hoverR=null, hoverC=null;
 best=parseInt(localStorage.getItem("bb_best")||"0");
 document.getElementById("best-val").textContent=best;
 
-function randomBlock(){
-  var t=SHAPES[POOL[Math.floor(Math.random()*POOL.length)]];
-  return{shape:t.s,color:t.c};
-}
 function initGrid(){
   grid=[];
   for(var r=0;r<GS;r++){grid.push([]);for(var c=0;c<GS;c++)grid[r].push(null);}
@@ -257,7 +258,7 @@ function initGrid(){
 function canPlace(shape,row,col){
   for(var r=0;r<shape.length;r++) for(var c=0;c<shape[r].length;c++){
     if(!shape[r][c])continue;
-    var nr=row+r,nc=col+c;
+    var nr=row+r, nc=col+c;
     if(nr<0||nr>=GS||nc<0||nc>=GS||grid[nr][nc])return false;
   }
   return true;
@@ -270,6 +271,7 @@ function hasAnyMove(){
   return false;
 }
 
+// ── Render grid ────────────────────────────────────────────────────────────────
 function renderGrid(){
   var el=document.getElementById("grid");
   el.innerHTML="";
@@ -280,20 +282,33 @@ function renderGrid(){
     cell.className="cell"+(grid[r][c]?" filled":"");
     cell.id="c"+r+"-"+c;
     cell.style.width=CS+"px"; cell.style.height=CS+"px";
-    if(grid[r][c]){ cell.style.background=grid[r][c]; cell.style.borderColor=grid[r][c]+"99"; }
+    if(grid[r][c]){ cell.style.background=grid[r][c]; cell.style.borderColor=grid[r][c]+"88"; }
     el.appendChild(cell);
   }
 }
 
+// ── Ghost (no border leaking) ──────────────────────────────────────────────────
+var ghostCells=[]; // track which cells have ghost applied
 function clearGhost(){
-  for(var r=0;r<GS;r++) for(var c=0;c<GS;c++){
-    if(grid[r][c])continue;
-    var cell=document.getElementById("c"+r+"-"+c);
-    if(!cell)continue;
-    cell.style.background="rgba(255,255,255,0.05)";
-    cell.style.borderColor="rgba(255,255,255,0.07)";
-    cell.style.transform="";
-  }
+  ghostCells.forEach(function(id){
+    var cell=document.getElementById(id);
+    if(!cell)return;
+    cell.classList.remove("ghost-valid","ghost-invalid");
+    cell.style.removeProperty("--gc");
+    // restore original look
+    if(grid){
+      var parts=id.replace("c","").split("-");
+      var r=parseInt(parts[0]),c=parseInt(parts[1]);
+      if(grid[r]&&grid[r][c]){
+        cell.style.background=grid[r][c];
+        cell.style.borderColor=grid[r][c]+"88";
+      } else {
+        cell.style.background="";
+        cell.style.borderColor="";
+      }
+    }
+  });
+  ghostCells=[];
 }
 function renderGhost(){
   clearGhost();
@@ -301,15 +316,23 @@ function renderGhost(){
   var valid=canPlace(dragBlock.shape,hoverR,hoverC);
   for(var r=0;r<dragBlock.shape.length;r++) for(var c=0;c<dragBlock.shape[r].length;c++){
     if(!dragBlock.shape[r][c])continue;
-    var nr=hoverR+r,nc=hoverC+c;
+    var nr=hoverR+r, nc=hoverC+c;
     if(nr<0||nr>=GS||nc<0||nc>=GS)continue;
     var cell=document.getElementById("c"+nr+"-"+nc);
     if(!cell||grid[nr][nc])continue;
-    if(valid){ cell.style.background=dragBlock.color+"55"; cell.style.borderColor=dragBlock.color+"aa"; cell.style.transform="scale(0.94)"; }
-    else{ cell.style.background="rgba(248,113,113,0.2)"; cell.style.borderColor="rgba(248,113,113,0.4)"; }
+    var id="c"+nr+"-"+nc;
+    ghostCells.push(id);
+    if(valid){
+      cell.style.background=dragBlock.color+"44";
+      cell.style.setProperty("--gc",dragBlock.color);
+      cell.classList.add("ghost-valid");
+    } else {
+      cell.classList.add("ghost-invalid");
+    }
   }
 }
 
+// ── Tray ───────────────────────────────────────────────────────────────────────
 function renderTray(){
   var tray=document.getElementById("tray");
   tray.innerHTML="";
@@ -318,9 +341,8 @@ function renderTray(){
     slot.className="block-slot"+(!blocks[i]?" used":"");
     slot.dataset.idx=i;
     if(blocks[i]){
-      var b=blocks[i],rows=b.shape.length,cols=b.shape[0].length;
-      var slotSize=Math.min(CS*2.5,68);
-      var cs=Math.min(20,Math.floor(slotSize/Math.max(rows,cols)));
+      var b=blocks[i], rows=b.shape.length, cols=b.shape[0].length;
+      var cs=Math.min(20,Math.floor(66/Math.max(rows,cols)));
       var mg=document.createElement("div");
       mg.className="mini-grid";
       mg.style.gridTemplateColumns="repeat("+cols+","+cs+"px)";
@@ -331,6 +353,7 @@ function renderTray(){
         bc.className="mini-cell";
         bc.style.width=cs+"px"; bc.style.height=cs+"px";
         bc.style.background=b.shape[r][c]?b.color:"transparent";
+        if(b.shape[r][c]) bc.style.boxShadow="0 1px 4px rgba(0,0,0,0.35)";
         mg.appendChild(bc);
       }
       slot.appendChild(mg);
@@ -343,12 +366,13 @@ function renderTray(){
   }
 }
 
-var GCS;
+// ── Drag ghost visual ──────────────────────────────────────────────────────────
+var GCS=38;
 function buildGhost(block){
-  GCS=Math.round(CS*0.9);
+  GCS=Math.max(28,Math.round(CS*0.88));
   var ghost=document.getElementById("drag-ghost");
   ghost.innerHTML="";
-  var rows=block.shape.length,cols=block.shape[0].length;
+  var rows=block.shape.length, cols=block.shape[0].length;
   var mg=document.createElement("div");
   mg.style.display="grid";
   mg.style.gridTemplateColumns="repeat("+cols+","+GCS+"px)";
@@ -359,30 +383,27 @@ function buildGhost(block){
     bc.className="ghost-cell";
     bc.style.width=GCS+"px"; bc.style.height=GCS+"px";
     bc.style.background=block.shape[r][c]?block.color:"transparent";
-    bc.style.border=block.shape[r][c]?"1.5px solid "+block.color+"cc":"none";
+    bc.style.border=block.shape[r][c]?"1.5px solid "+block.color+"bb":"none";
     mg.appendChild(bc);
   }
   ghost.appendChild(mg);
   ghost.style.display="block";
 }
-
 function posGhost(cx,cy){
   if(!dragBlock)return;
-  var cols=dragBlock.shape[0].length,rows=dragBlock.shape.length;
-  var w=cols*GCS+(cols-1)*3,h=rows*GCS+(rows-1)*3;
+  var cols=dragBlock.shape[0].length, rows=dragBlock.shape.length;
+  var w=cols*GCS+(cols-1)*3, h=rows*GCS+(rows-1)*3;
   var g=document.getElementById("drag-ghost");
   g.style.left=(cx-w/2)+"px";
-  g.style.top=(cy-h/2-34)+"px";
+  g.style.top=(cy-h/2-32)+"px"; // shorter offset
 }
-
 function getAnchor(cx,cy){
   var rect=document.getElementById("grid").getBoundingClientRect();
-  var cols=dragBlock.shape[0].length,rows=dragBlock.shape.length;
-  var bw=cols*CS+(cols-1)*GAP,bh=rows*CS+(rows-1)*GAP;
-  var rx=cx-rect.left-bw/2, ry=cy-rect.top-bh/2-34;
-  return{row:Math.round(ry/(CS+GAP)),col:Math.round(rx/(CS+GAP))};
+  var cols=dragBlock.shape[0].length, rows=dragBlock.shape.length;
+  var bw=cols*CS+(cols-1)*GAP, bh=rows*CS+(rows-1)*GAP;
+  var rx=cx-rect.left-bw/2, ry=cy-rect.top-bh/2-32;
+  return{row:Math.round(ry/(CS+GAP)), col:Math.round(rx/(CS+GAP))};
 }
-
 function startDrag(idx,cx,cy){
   if(!blocks[idx])return;
   dragging=idx; dragBlock=blocks[idx];
@@ -392,7 +413,6 @@ function startDrag(idx,cx,cy){
   var a=getAnchor(cx,cy); hoverR=a.row; hoverC=a.col;
   renderGhost();
 }
-
 window.addEventListener("mousemove",function(e){
   if(dragging<0)return;
   posGhost(e.clientX,e.clientY);
@@ -407,45 +427,15 @@ window.addEventListener("touchmove",function(e){
 window.addEventListener("mouseup",function(e){if(dragging>=0)drop(e.clientX,e.clientY);});
 window.addEventListener("touchend",function(e){if(dragging>=0)drop(e.changedTouches[0].clientX,e.changedTouches[0].clientY);});
 
-function spawnParticles(cells,color){
-  cells.forEach(function(id){
-    var el=document.getElementById(id);
-    if(!el)return;
-    var rect=el.getBoundingClientRect();
-    var cx=rect.left+rect.width/2, cy=rect.top+rect.height/2;
-    for(var i=0;i<5;i++){
-      var p=document.createElement("div");
-      p.className="particle";
-      p.style.background=color;
-      p.style.boxShadow="0 0 5px "+color;
-      var angle=Math.random()*Math.PI*2;
-      var dist=25+Math.random()*45;
-      p.style.setProperty("--tx",Math.cos(angle)*dist+"px");
-      p.style.setProperty("--ty",Math.sin(angle)*dist+"px");
-      p.style.left=(cx-3)+"px"; p.style.top=(cy-3)+"px";
-      p.style.animationDelay=(Math.random()*0.07)+"s";
-      document.body.appendChild(p);
-      setTimeout(function(pp){if(pp.parentNode)pp.parentNode.removeChild(pp);},650,p);
-    }
-  });
-}
-
-function showScoreFloat(pts,cx,cy){
-  var el=document.createElement("div");
-  el.className="score-float";
-  el.textContent="+"+pts;
-  el.style.left=cx+"px"; el.style.top=cy+"px";
-  document.body.appendChild(el);
-  setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},900);
-}
-
+// ── Drop ───────────────────────────────────────────────────────────────────────
 function drop(cx,cy){
   document.getElementById("drag-ghost").style.display="none";
   var sl=document.querySelector(".block-slot[data-idx='"+dragging+"']");
   if(sl)sl.classList.remove("dragging");
   var a=getAnchor(cx,cy); hoverR=a.row; hoverC=a.col;
   if(!canPlace(dragBlock.shape,hoverR,hoverC)){
-    dragging=-1; dragBlock=null; hoverR=null; hoverC=null; clearGhost();
+    dragging=-1; dragBlock=null; hoverR=null; hoverC=null;
+    clearGhost(); // always clear ghost completely on cancel
     var w=document.getElementById("grid-wrap");
     w.classList.add("shake");
     setTimeout(function(){w.classList.remove("shake");},350);
@@ -457,6 +447,8 @@ function drop(cx,cy){
   }
   var idx=dragging;
   dragging=-1; dragBlock=null; hoverR=null; hoverC=null;
+  clearGhost(); // clear before renderGrid
+
   var cleared=clearLines();
   combo=cleared>0?combo+1:0;
   var ls=cleared*18+(cleared>1?cleared*(cleared-1)*10:0);
@@ -467,15 +459,19 @@ function drop(cx,cy){
   document.getElementById("score-val").textContent=score;
   document.getElementById("best-val").textContent=best;
   document.getElementById("combo-text").textContent=combo>1?"COMBO x"+combo+" 🔥":"";
-  if(gained>bc) showScoreFloat(gained,cx-20,cy-70);
+  if(ls>0||cb>0) showScoreFloat(gained,cx-20,cy-70);
   if(cleared>0) showComboPopup(cleared,combo);
+
+  // Mark this slot used, refill only when ALL 3 are null
   blocks[idx]=null;
-  if(blocks.every(function(b){return b===null;}))
-    blocks=[randomBlock(),randomBlock(),randomBlock()];
-  renderGrid(); renderTray(); clearGhost();
+  var allUsed=blocks.every(function(b){return b===null;});
+  if(allUsed) blocks=[randomBlock(),randomBlock(),randomBlock()];
+
+  renderGrid(); renderTray();
   setTimeout(function(){if(!hasAnyMove())showGameOver();},50);
 }
 
+// ── Clear lines with pop + particles ─────────────────────────────────────────
 function clearLines(){
   var rc=[],cc=[];
   for(var r=0;r<GS;r++){
@@ -496,14 +492,14 @@ function clearLines(){
   var colorMap={};
   keys.forEach(function(id){
     var el=document.getElementById(id);
-    if(el)colorMap[id]=el.style.background||"#a5b4fc";
+    if(el) colorMap[id]=el.style.background||"#a5b4fc";
   });
   keys.forEach(function(id){
     var el=document.getElementById(id);
     if(el){
       el.classList.add("clearing");
       var parts=id.replace("c","").split("-");
-      el.style.animationDelay=(parseInt(parts[0])+parseInt(parts[1]))*0.016+"s";
+      el.style.animationDelay=(parseInt(parts[0])+parseInt(parts[1]))*0.015+"s";
     }
   });
   setTimeout(function(){
@@ -519,28 +515,54 @@ function clearLines(){
     for(var i=0;i<rc.length;i++) for(var c=0;c<GS;c++) grid[rc[i]][c]=null;
     for(var i=0;i<cc.length;i++) for(var r=0;r<GS;r++) grid[r][cc[i]]=null;
     renderGrid();
-  },360);
+  },350);
   return rc.length+cc.length;
 }
 
+function spawnParticles(cells,color){
+  cells.forEach(function(id){
+    var el=document.getElementById(id);
+    if(!el)return;
+    var rect=el.getBoundingClientRect();
+    var cx=rect.left+rect.width/2, cy=rect.top+rect.height/2;
+    for(var i=0;i<5;i++){
+      var p=document.createElement("div");
+      p.className="particle";
+      p.style.background=color;
+      p.style.boxShadow="0 0 5px "+color;
+      var angle=Math.random()*Math.PI*2, dist=24+Math.random()*44;
+      p.style.setProperty("--tx",Math.cos(angle)*dist+"px");
+      p.style.setProperty("--ty",Math.sin(angle)*dist+"px");
+      p.style.left=(cx-3)+"px"; p.style.top=(cy-3)+"px";
+      p.style.animationDelay=(Math.random()*0.07)+"s";
+      document.body.appendChild(p);
+      setTimeout(function(pp){if(pp.parentNode)pp.parentNode.removeChild(pp);},650,p);
+    }
+  });
+}
+
+function showScoreFloat(pts,cx,cy){
+  var el=document.createElement("div");
+  el.className="score-float"; el.textContent="+"+pts;
+  el.style.left=cx+"px"; el.style.top=cy+"px";
+  document.body.appendChild(el);
+  setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},900);
+}
 function showComboPopup(lines,c){
   var p=document.getElementById("combo-popup");
   p.style.display="block"; p.style.left="50%"; p.style.top="45%";
   p.style.animation="none"; p.style.webkitAnimation="none";
   void p.offsetHeight;
   p.style.animation="comboIn 0.9s cubic-bezier(.34,1.56,.64,1) forwards";
-  p.style.webkitAnimation="comboIn 0.9s cubic-bezier(.34,1.56,.64,1) forwards";
   document.getElementById("cp-line1").textContent=lines>1?lines+" LINES!":"CLEAR!";
   document.getElementById("cp-line2").textContent=c>1?"COMBO x"+c:"";
   setTimeout(function(){p.style.display="none";},900);
 }
-
 function showGameOver(){
   document.getElementById("go-score").textContent=score;
   document.getElementById("go-best").textContent="Best: "+best;
   document.getElementById("gameover").style.display="flex";
 }
-
 function resetGame(){
   document.getElementById("gameover").style.display="none";
   score=0; combo=0;
@@ -550,15 +572,8 @@ function resetGame(){
   blocks=[randomBlock(),randomBlock(),randomBlock()];
   renderGrid(); renderTray();
 }
-
-window.addEventListener("DOMContentLoaded",function(){
-  calcCellSize();
-  resetGame();
-});
-window.addEventListener("resize",function(){
-  calcCellSize();
-  renderGrid(); renderTray();
-});
+window.addEventListener("DOMContentLoaded",function(){calcCS();resetGame();});
+window.addEventListener("resize",function(){calcCS();renderGrid();renderTray();});
 </script>
 </body>
 </html>
