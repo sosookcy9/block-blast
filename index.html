@@ -9,102 +9,102 @@
 <meta name="mobile-web-app-capable" content="yes">
 <title>Block Blast</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@700;900&display=swap');
 * { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-user-select:none; -webkit-tap-highlight-color:transparent; }
 html,body { width:100%; height:100%; }
 body {
-  min-height:100vh;
-  min-height:-webkit-fill-available;
-  background: #0a0a14;
+  height:100vh;
+  height:-webkit-fill-available;
+  background:#0a0a14;
   display:flex; flex-direction:column; align-items:center; justify-content:center;
-  font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+  font-family:-apple-system,'Helvetica Neue',sans-serif;
   overflow:hidden;
 }
-
-/* Background subtle glow */
 body::before {
   content:'';
   position:fixed; inset:0;
-  background: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(99,102,241,0.15) 0%, transparent 70%),
-              radial-gradient(ellipse 60% 40% at 80% 100%, rgba(236,72,153,0.08) 0%, transparent 60%);
+  background:radial-gradient(ellipse 80% 50% at 50% 0%,rgba(99,102,241,0.18) 0%,transparent 70%),
+             radial-gradient(ellipse 60% 40% at 80% 100%,rgba(236,72,153,0.09) 0%,transparent 60%);
   pointer-events:none;
 }
 
-#title {
-  font-size:26px; font-weight:900; letter-spacing:3px;
-  background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
-  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-  margin-bottom:14px; text-align:center;
+#game {
+  display:flex; flex-direction:column; align-items:center;
+  /* JS will set transform scale */
 }
 
-#scores { display:flex; gap:12px; margin-bottom:10px; }
+#title {
+  font-size:24px; font-weight:900; letter-spacing:3px;
+  background:linear-gradient(135deg,#fff 0%,#a5b4fc 100%);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  margin-bottom:10px;
+}
+
+#scores { display:flex; gap:10px; margin-bottom:8px; }
 .score-box {
-  background: rgba(255,255,255,0.07);
+  background:rgba(255,255,255,0.07);
   border:1px solid rgba(255,255,255,0.12);
-  border-radius:16px; padding:8px 22px; text-align:center;
+  border-radius:14px; padding:6px 20px; text-align:center;
   -webkit-backdrop-filter:blur(20px); backdrop-filter:blur(20px);
+  min-width:90px;
 }
 .score-box.gold { border-color:rgba(251,191,36,0.3); background:rgba(251,191,36,0.07); }
-.score-label { font-size:9px; color:rgba(255,255,255,0.4); font-weight:700; letter-spacing:2px; text-transform:uppercase; }
+.score-label { font-size:9px; color:rgba(255,255,255,0.4); font-weight:700; letter-spacing:2px; }
 .score-label.gold { color:rgba(251,191,36,0.7); }
-.score-value { font-size:26px; font-weight:900; color:#fff; line-height:1.1; }
+.score-value { font-size:24px; font-weight:900; color:#fff; line-height:1.1; }
 .score-value.gold { color:#fbbf24; }
 
-#combo-text { color:#a5b4fc; font-size:13px; font-weight:700; height:18px; text-align:center; margin-bottom:8px; letter-spacing:1px; }
+#combo-text { color:#a5b4fc; font-size:12px; font-weight:700; height:16px; text-align:center; margin-bottom:6px; letter-spacing:1px; }
 
 #grid-wrap {
-  background: rgba(255,255,255,0.04);
-  border-radius:20px; padding:7px;
+  background:rgba(255,255,255,0.04);
+  border-radius:18px; padding:6px;
   border:1px solid rgba(255,255,255,0.08);
-  box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04) inset;
-  position:relative;
+  box-shadow:0 20px 60px rgba(0,0,0,0.6),0 0 0 1px rgba(255,255,255,0.04) inset;
 }
-
-#grid { display:grid; grid-template-columns:repeat(8,42px); grid-template-rows:repeat(8,42px); gap:3px; }
+#grid { display:grid; gap:3px; }
 
 .cell {
-  width:42px; height:42px; border-radius:10px;
+  border-radius:9px;
   background:rgba(255,255,255,0.05);
-  border:1px solid rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.07);
   position:relative;
-  transition: background 0.08s, transform 0.08s;
-  -webkit-transition: background 0.08s, transform 0.08s;
+  -webkit-transition:background 0.08s,-webkit-transform 0.08s;
+  transition:background 0.08s,transform 0.08s;
 }
-.cell.filled { box-shadow: 0 2px 8px rgba(0,0,0,0.3), 0 1px 0 rgba(255,255,255,0.15) inset; }
+.cell.filled { box-shadow:0 2px 6px rgba(0,0,0,0.3),0 1px 0 rgba(255,255,255,0.15) inset; }
 
-/* Clear animation */
-@keyframes cellPop {
-  0%   { transform:scale(1);   opacity:1; }
-  30%  { transform:scale(1.15);opacity:1; }
-  60%  { transform:scale(0.7); opacity:0.6; }
-  100% { transform:scale(0);   opacity:0; }
-}
 @-webkit-keyframes cellPop {
-  0%   { -webkit-transform:scale(1);   opacity:1; }
-  30%  { -webkit-transform:scale(1.15);opacity:1; }
-  60%  { -webkit-transform:scale(0.7); opacity:0.6; }
-  100% { -webkit-transform:scale(0);   opacity:0; }
+  0%{-webkit-transform:scale(1);opacity:1}
+  30%{-webkit-transform:scale(1.15);opacity:1}
+  65%{-webkit-transform:scale(0.65);opacity:0.5}
+  100%{-webkit-transform:scale(0);opacity:0}
+}
+@keyframes cellPop {
+  0%{transform:scale(1);opacity:1}
+  30%{transform:scale(1.15);opacity:1}
+  65%{transform:scale(0.65);opacity:0.5}
+  100%{transform:scale(0);opacity:0}
 }
 .cell.clearing {
-  -webkit-animation: cellPop 0.35s cubic-bezier(.36,.07,.19,.97) forwards;
-  animation: cellPop 0.35s cubic-bezier(.36,.07,.19,.97) forwards;
+  -webkit-animation:cellPop 0.35s cubic-bezier(.36,.07,.19,.97) forwards;
+  animation:cellPop 0.35s cubic-bezier(.36,.07,.19,.97) forwards;
   z-index:10;
 }
 
-/* Particle */
 .particle {
   position:fixed; pointer-events:none; z-index:200;
-  border-radius:50%; width:7px; height:7px;
-}
-@keyframes particleFly {
-  0%   { transform:translate(0,0) scale(1); opacity:1; }
-  100% { transform:translate(var(--tx), var(--ty)) scale(0); opacity:0; }
+  border-radius:50%; width:6px; height:6px;
+  -webkit-animation:particleFly 0.55s ease-out forwards;
+  animation:particleFly 0.55s ease-out forwards;
 }
 @-webkit-keyframes particleFly {
-  0%   { -webkit-transform:translate(0,0) scale(1); opacity:1; }
-  100% { -webkit-transform:translate(var(--tx),var(--ty)) scale(0); opacity:0; }
+  0%{-webkit-transform:translate(0,0) scale(1);opacity:1}
+  100%{-webkit-transform:translate(var(--tx),var(--ty)) scale(0);opacity:0}
 }
-.particle { -webkit-animation:particleFly 0.6s ease-out forwards; animation:particleFly 0.6s ease-out forwards; }
+@keyframes particleFly {
+  0%{transform:translate(0,0) scale(1);opacity:1}
+  100%{transform:translate(var(--tx),var(--ty)) scale(0);opacity:0}
+}
 
 @keyframes shake {
   0%,100%{transform:translateX(0)}
@@ -114,88 +114,83 @@ body::before {
 .shake { animation:shake 0.35s ease; }
 
 #tray {
-  display:flex; gap:14px; margin-top:12px;
+  display:flex; gap:12px; margin-top:10px;
   background:rgba(255,255,255,0.05);
-  border-radius:22px; padding:12px 18px;
+  border-radius:20px; padding:10px 16px;
   border:1px solid rgba(255,255,255,0.08);
-  -webkit-backdrop-filter:blur(20px); backdrop-filter:blur(20px);
 }
 .block-slot {
-  width:78px; height:78px; display:flex; align-items:center; justify-content:center;
-  cursor:grab; transition:opacity 0.2s, transform 0.15s;
-  border-radius:14px;
+  width:76px; height:76px; display:flex; align-items:center; justify-content:center;
+  cursor:grab; -webkit-transition:opacity 0.2s,-webkit-transform 0.15s; transition:opacity 0.2s,transform 0.15s;
+  border-radius:12px;
 }
-.block-slot:active { transform:scale(0.93); }
-.block-slot.dragging { opacity:0.25; }
+.block-slot.dragging { opacity:0.2; }
 .block-slot.used { opacity:0; pointer-events:none; }
 .mini-grid { display:grid; gap:2px; }
-.mini-cell { border-radius:4px; box-shadow:0 1px 3px rgba(0,0,0,0.3); }
+.mini-cell { border-radius:4px; }
 
-#drag-ghost { position:fixed; pointer-events:none; z-index:500; opacity:0.9; display:none; }
-.ghost-cell { border-radius:9px; box-shadow:0 4px 12px rgba(0,0,0,0.4); }
+#drag-ghost { position:fixed; pointer-events:none; z-index:500; opacity:0.88; display:none; }
+.ghost-cell { border-radius:8px; }
 
-/* Combo popup */
 @keyframes comboIn {
-  0%  { transform:translate(-50%,-50%) scale(0.4); opacity:0; }
-  35% { transform:translate(-50%,-70%) scale(1.15); opacity:1; }
-  70% { transform:translate(-50%,-90%) scale(1); opacity:1; }
-  100%{ transform:translate(-50%,-110%) scale(0.85); opacity:0; }
+  0%{transform:translate(-50%,-50%) scale(0.4);opacity:0}
+  35%{transform:translate(-50%,-70%) scale(1.15);opacity:1}
+  70%{transform:translate(-50%,-90%) scale(1);opacity:1}
+  100%{transform:translate(-50%,-110%) scale(0.85);opacity:0}
 }
 #combo-popup { position:fixed; pointer-events:none; z-index:999; text-align:center; display:none; }
-#combo-popup .line1 { font-size:34px; font-weight:900; color:#fff; text-shadow:0 0 30px #a5b4fc; }
-#combo-popup .line2 { font-size:20px; color:#a5b4fc; font-weight:700; }
+#combo-popup .line1 { font-size:32px; font-weight:900; color:#fff; text-shadow:0 0 30px #a5b4fc; }
+#combo-popup .line2 { font-size:18px; color:#a5b4fc; font-weight:700; }
 
-/* Score float */
 @keyframes scoreFloat {
-  0%   { transform:translate(-50%,0); opacity:1; }
-  100% { transform:translate(-50%,-60px); opacity:0; }
+  0%{transform:translate(-50%,0);opacity:1}
+  100%{transform:translate(-50%,-55px);opacity:0}
 }
 .score-float {
   position:fixed; pointer-events:none; z-index:998;
-  font-size:22px; font-weight:900; color:#a5b4fc;
-  text-shadow:0 0 20px rgba(165,180,252,0.8);
-  animation:scoreFloat 0.9s ease-out forwards;
-  -webkit-animation:scoreFloat 0.9s ease-out forwards;
+  font-size:20px; font-weight:900; color:#a5b4fc;
+  text-shadow:0 0 16px rgba(165,180,252,0.8);
+  -webkit-animation:scoreFloat 0.85s ease-out forwards;
+  animation:scoreFloat 0.85s ease-out forwards;
 }
 
-/* Game Over */
 #gameover {
   position:fixed; inset:0; z-index:100;
-  background:rgba(0,0,0,0.75);
+  background:rgba(0,0,0,0.78);
   -webkit-backdrop-filter:blur(20px); backdrop-filter:blur(20px);
   display:none; flex-direction:column; align-items:center; justify-content:center;
 }
 @keyframes pop { 0%{transform:scale(0.6);opacity:0} 60%{transform:scale(1.05)} 100%{transform:scale(1);opacity:1} }
 #gameover-box {
-  background:rgba(20,20,35,0.9);
+  background:rgba(18,18,30,0.92);
   border:1px solid rgba(255,255,255,0.12);
   border-radius:28px; padding:36px 48px; text-align:center;
   animation:pop 0.4s cubic-bezier(.34,1.56,.64,1);
-  box-shadow:0 30px 80px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.05) inset;
-  -webkit-backdrop-filter:blur(40px); backdrop-filter:blur(40px);
+  box-shadow:0 30px 80px rgba(0,0,0,0.8);
 }
 .go-title { font-size:26px; font-weight:900; color:#f87171; margin-bottom:4px; }
-.go-sub { color:rgba(255,255,255,0.35); font-size:13px; margin-bottom:20px; }
+.go-sub { color:rgba(255,255,255,0.35); font-size:13px; margin-bottom:18px; }
 .go-score { font-size:52px; font-weight:900; color:#fff; margin-bottom:4px; line-height:1; }
-.go-best { color:rgba(251,191,36,0.7); font-size:13px; margin-bottom:28px; }
+.go-best { color:rgba(251,191,36,0.7); font-size:13px; margin-bottom:26px; }
 #gameover-box button {
-  background:linear-gradient(135deg, #6366f1, #8b5cf6);
+  background:linear-gradient(135deg,#6366f1,#8b5cf6);
   border:none; border-radius:16px; padding:14px 44px;
   font-size:17px; font-weight:700; color:#fff; cursor:pointer;
   box-shadow:0 8px 24px rgba(99,102,241,0.4);
-  letter-spacing:0.5px;
 }
 </style>
 </head>
 <body>
-<div id="title">BLOCK BLAST</div>
-<div id="scores">
-  <div class="score-box"><div class="score-label">SCORE</div><div class="score-value" id="score-val">0</div></div>
-  <div class="score-box gold"><div class="score-label gold">BEST</div><div class="score-value gold" id="best-val">0</div></div>
+<div id="game">
+  <div id="title">BLOCK BLAST</div>
+  <div id="scores">
+    <div class="score-box"><div class="score-label">SCORE</div><div class="score-value" id="score-val">0</div></div>
+    <div class="score-box gold"><div class="score-label gold">BEST</div><div class="score-value gold" id="best-val">0</div></div>
+  </div>
+  <div id="combo-text"></div>
+  <div id="grid-wrap"><div id="grid"></div></div>
+  <div id="tray"></div>
 </div>
-<div id="combo-text"></div>
-<div id="grid-wrap"><div id="grid"></div></div>
-<div id="tray"></div>
 <div id="drag-ghost"></div>
 <div id="combo-popup"><div class="line1" id="cp-line1"></div><div class="line2" id="cp-line2"></div></div>
 <div id="gameover">
@@ -209,41 +204,45 @@ body::before {
 </div>
 
 <script>
-var GS=8, CS=42, GAP=3;
+var GS=8, GAP=3;
+var CS=42; // cell size, will be recalculated
 
-// Weighted shapes — smaller pieces appear more often
+// Responsive: calculate cell size to fit screen
+function calcCellSize(){
+  var vw=window.innerWidth, vh=window.innerHeight;
+  // total height needed: title~34 + scores~52 + combo~24 + tray~98 + margins~50
+  var overhead=258;
+  var gridPad=13; // padding*2 + border*2
+  var availH=vh-overhead;
+  var availW=vw-40; // side margins
+  var maxFromH=Math.floor((availH-gridPad)/GS)-GAP;
+  var maxFromW=Math.floor((availW-gridPad)/GS)-GAP;
+  CS=Math.min(42,Math.max(28,Math.min(maxFromH,maxFromW)));
+}
+
 var SHAPES=[
-  // weight 4 — singles & doubles
   {s:[[1]],c:"#f87171",w:4},
   {s:[[1,1]],c:"#34d399",w:4},
   {s:[[1],[1]],c:"#34d399",w:4},
-  // weight 3 — triples & small L
   {s:[[1,1,1]],c:"#60a5fa",w:3},
   {s:[[1],[1],[1]],c:"#a78bfa",w:3},
   {s:[[1,0],[1,0],[1,1]],c:"#f472b6",w:3},
   {s:[[0,1],[0,1],[1,1]],c:"#fb923c",w:3},
   {s:[[0,1,1],[1,1,0]],c:"#4ade80",w:3},
   {s:[[1,1,0],[0,1,1]],c:"#38bdf8",w:3},
-  // weight 2 — 2x2 & T & quads
   {s:[[1,1],[1,1]],c:"#fde68a",w:2},
   {s:[[1,1,1],[0,1,0]],c:"#c084fc",w:2},
   {s:[[1,1,1,1]],c:"#fcd34d",w:2},
   {s:[[1],[1],[1],[1]],c:"#6ee7b7",w:2},
   {s:[[1,1],[1,1],[1,1]],c:"#93c5fd",w:2},
   {s:[[1,1,1],[1,1,1]],c:"#f9a8d4",w:2},
-  // weight 1 — 3x3
   {s:[[1,1,1],[1,1,1],[1,1,1]],c:"#e879f9",w:1}
 ];
-
-// Build weighted pool
 var POOL=[];
-for(var i=0;i<SHAPES.length;i++){
-  for(var w=0;w<SHAPES[i].w;w++) POOL.push(i);
-}
+for(var i=0;i<SHAPES.length;i++) for(var w=0;w<SHAPES[i].w;w++) POOL.push(i);
 
 var grid,blocks,score,best,combo;
 var dragging=-1,dragBlock=null,hoverR=null,hoverC=null;
-
 best=parseInt(localStorage.getItem("bb_best")||"0");
 document.getElementById("best-val").textContent=best;
 
@@ -251,25 +250,22 @@ function randomBlock(){
   var t=SHAPES[POOL[Math.floor(Math.random()*POOL.length)]];
   return{shape:t.s,color:t.c};
 }
-
 function initGrid(){
   grid=[];
   for(var r=0;r<GS;r++){grid.push([]);for(var c=0;c<GS;c++)grid[r].push(null);}
 }
-
 function canPlace(shape,row,col){
-  for(var r=0;r<shape.length;r++)for(var c=0;c<shape[r].length;c++){
+  for(var r=0;r<shape.length;r++) for(var c=0;c<shape[r].length;c++){
     if(!shape[r][c])continue;
     var nr=row+r,nc=col+c;
     if(nr<0||nr>=GS||nc<0||nc>=GS||grid[nr][nc])return false;
   }
   return true;
 }
-
 function hasAnyMove(){
   for(var i=0;i<blocks.length;i++){
     if(!blocks[i])continue;
-    for(var r=0;r<GS;r++)for(var c=0;c<GS;c++)if(canPlace(blocks[i].shape,r,c))return true;
+    for(var r=0;r<GS;r++) for(var c=0;c<GS;c++) if(canPlace(blocks[i].shape,r,c))return true;
   }
   return false;
 }
@@ -277,47 +273,40 @@ function hasAnyMove(){
 function renderGrid(){
   var el=document.getElementById("grid");
   el.innerHTML="";
-  for(var r=0;r<GS;r++)for(var c=0;c<GS;c++){
+  el.style.gridTemplateColumns="repeat("+GS+","+CS+"px)";
+  el.style.gridTemplateRows="repeat("+GS+","+CS+"px)";
+  for(var r=0;r<GS;r++) for(var c=0;c<GS;c++){
     var cell=document.createElement("div");
     cell.className="cell"+(grid[r][c]?" filled":"");
     cell.id="c"+r+"-"+c;
-    if(grid[r][c]){
-      cell.style.background=grid[r][c];
-      cell.style.borderColor=grid[r][c]+"99";
-    }
+    cell.style.width=CS+"px"; cell.style.height=CS+"px";
+    if(grid[r][c]){ cell.style.background=grid[r][c]; cell.style.borderColor=grid[r][c]+"99"; }
     el.appendChild(cell);
   }
 }
 
 function clearGhost(){
-  for(var r=0;r<GS;r++)for(var c=0;c<GS;c++){
+  for(var r=0;r<GS;r++) for(var c=0;c<GS;c++){
     if(grid[r][c])continue;
     var cell=document.getElementById("c"+r+"-"+c);
     if(!cell)continue;
     cell.style.background="rgba(255,255,255,0.05)";
-    cell.style.borderColor="rgba(255,255,255,0.06)";
+    cell.style.borderColor="rgba(255,255,255,0.07)";
     cell.style.transform="";
   }
 }
-
 function renderGhost(){
   clearGhost();
   if(dragging<0||hoverR===null||!dragBlock)return;
   var valid=canPlace(dragBlock.shape,hoverR,hoverC);
-  for(var r=0;r<dragBlock.shape.length;r++)for(var c=0;c<dragBlock.shape[r].length;c++){
+  for(var r=0;r<dragBlock.shape.length;r++) for(var c=0;c<dragBlock.shape[r].length;c++){
     if(!dragBlock.shape[r][c])continue;
     var nr=hoverR+r,nc=hoverC+c;
     if(nr<0||nr>=GS||nc<0||nc>=GS)continue;
     var cell=document.getElementById("c"+nr+"-"+nc);
     if(!cell||grid[nr][nc])continue;
-    if(valid){
-      cell.style.background=dragBlock.color+"55";
-      cell.style.borderColor=dragBlock.color+"aa";
-      cell.style.transform="scale(0.95)";
-    }else{
-      cell.style.background="rgba(248,113,113,0.2)";
-      cell.style.borderColor="rgba(248,113,113,0.4)";
-    }
+    if(valid){ cell.style.background=dragBlock.color+"55"; cell.style.borderColor=dragBlock.color+"aa"; cell.style.transform="scale(0.94)"; }
+    else{ cell.style.background="rgba(248,113,113,0.2)"; cell.style.borderColor="rgba(248,113,113,0.4)"; }
   }
 }
 
@@ -330,18 +319,18 @@ function renderTray(){
     slot.dataset.idx=i;
     if(blocks[i]){
       var b=blocks[i],rows=b.shape.length,cols=b.shape[0].length;
-      var cs=Math.min(20,Math.floor(66/Math.max(rows,cols)));
+      var slotSize=Math.min(CS*2.5,68);
+      var cs=Math.min(20,Math.floor(slotSize/Math.max(rows,cols)));
       var mg=document.createElement("div");
       mg.className="mini-grid";
       mg.style.gridTemplateColumns="repeat("+cols+","+cs+"px)";
       mg.style.gridTemplateRows="repeat("+rows+","+cs+"px)";
       mg.style.gap="2px";
-      for(var r=0;r<rows;r++)for(var c=0;c<cols;c++){
+      for(var r=0;r<rows;r++) for(var c=0;c<cols;c++){
         var bc=document.createElement("div");
         bc.className="mini-cell";
-        bc.style.width=cs+"px";bc.style.height=cs+"px";
+        bc.style.width=cs+"px"; bc.style.height=cs+"px";
         bc.style.background=b.shape[r][c]?b.color:"transparent";
-        if(b.shape[r][c])bc.style.boxShadow="0 2px 6px rgba(0,0,0,0.4)";
         mg.appendChild(bc);
       }
       slot.appendChild(mg);
@@ -354,8 +343,9 @@ function renderTray(){
   }
 }
 
-var GCS=38;
+var GCS;
 function buildGhost(block){
+  GCS=Math.round(CS*0.9);
   var ghost=document.getElementById("drag-ghost");
   ghost.innerHTML="";
   var rows=block.shape.length,cols=block.shape[0].length;
@@ -364,10 +354,10 @@ function buildGhost(block){
   mg.style.gridTemplateColumns="repeat("+cols+","+GCS+"px)";
   mg.style.gridTemplateRows="repeat("+rows+","+GCS+"px)";
   mg.style.gap="3px";
-  for(var r=0;r<rows;r++)for(var c=0;c<cols;c++){
+  for(var r=0;r<rows;r++) for(var c=0;c<cols;c++){
     var bc=document.createElement("div");
     bc.className="ghost-cell";
-    bc.style.width=GCS+"px";bc.style.height=GCS+"px";
+    bc.style.width=GCS+"px"; bc.style.height=GCS+"px";
     bc.style.background=block.shape[r][c]?block.color:"transparent";
     bc.style.border=block.shape[r][c]?"1.5px solid "+block.color+"cc":"none";
     mg.appendChild(bc);
@@ -381,39 +371,38 @@ function posGhost(cx,cy){
   var cols=dragBlock.shape[0].length,rows=dragBlock.shape.length;
   var w=cols*GCS+(cols-1)*3,h=rows*GCS+(rows-1)*3;
   var g=document.getElementById("drag-ghost");
-  // ghost floats just above finger — offset shorter than before
   g.style.left=(cx-w/2)+"px";
-  g.style.top=(cy-h/2-36)+"px";
+  g.style.top=(cy-h/2-34)+"px";
 }
 
 function getAnchor(cx,cy){
   var rect=document.getElementById("grid").getBoundingClientRect();
   var cols=dragBlock.shape[0].length,rows=dragBlock.shape.length;
   var bw=cols*CS+(cols-1)*GAP,bh=rows*CS+(rows-1)*GAP;
-  var rx=cx-rect.left-bw/2, ry=cy-rect.top-bh/2-36;
+  var rx=cx-rect.left-bw/2, ry=cy-rect.top-bh/2-34;
   return{row:Math.round(ry/(CS+GAP)),col:Math.round(rx/(CS+GAP))};
 }
 
 function startDrag(idx,cx,cy){
   if(!blocks[idx])return;
-  dragging=idx;dragBlock=blocks[idx];
+  dragging=idx; dragBlock=blocks[idx];
   var sl=document.querySelector(".block-slot[data-idx='"+idx+"']");
   if(sl)sl.classList.add("dragging");
-  buildGhost(dragBlock);posGhost(cx,cy);
-  var a=getAnchor(cx,cy);hoverR=a.row;hoverC=a.col;
+  buildGhost(dragBlock); posGhost(cx,cy);
+  var a=getAnchor(cx,cy); hoverR=a.row; hoverC=a.col;
   renderGhost();
 }
 
 window.addEventListener("mousemove",function(e){
   if(dragging<0)return;
   posGhost(e.clientX,e.clientY);
-  var a=getAnchor(e.clientX,e.clientY);hoverR=a.row;hoverC=a.col;renderGhost();
+  var a=getAnchor(e.clientX,e.clientY); hoverR=a.row; hoverC=a.col; renderGhost();
 });
 window.addEventListener("touchmove",function(e){
-  if(dragging<0)return;e.preventDefault();
+  if(dragging<0)return; e.preventDefault();
   var t=e.touches[0];
   posGhost(t.clientX,t.clientY);
-  var a=getAnchor(t.clientX,t.clientY);hoverR=a.row;hoverC=a.col;renderGhost();
+  var a=getAnchor(t.clientX,t.clientY); hoverR=a.row; hoverC=a.col; renderGhost();
 },{passive:false});
 window.addEventListener("mouseup",function(e){if(dragging>=0)drop(e.clientX,e.clientY);});
 window.addEventListener("touchend",function(e){if(dragging>=0)drop(e.changedTouches[0].clientX,e.changedTouches[0].clientY);});
@@ -424,20 +413,19 @@ function spawnParticles(cells,color){
     if(!el)return;
     var rect=el.getBoundingClientRect();
     var cx=rect.left+rect.width/2, cy=rect.top+rect.height/2;
-    for(var i=0;i<6;i++){
+    for(var i=0;i<5;i++){
       var p=document.createElement("div");
       p.className="particle";
       p.style.background=color;
-      p.style.boxShadow="0 0 6px "+color;
+      p.style.boxShadow="0 0 5px "+color;
       var angle=Math.random()*Math.PI*2;
-      var dist=30+Math.random()*50;
+      var dist=25+Math.random()*45;
       p.style.setProperty("--tx",Math.cos(angle)*dist+"px");
       p.style.setProperty("--ty",Math.sin(angle)*dist+"px");
-      p.style.left=(cx-3.5)+"px";
-      p.style.top=(cy-3.5)+"px";
-      p.style.animationDelay=(Math.random()*0.08)+"s";
+      p.style.left=(cx-3)+"px"; p.style.top=(cy-3)+"px";
+      p.style.animationDelay=(Math.random()*0.07)+"s";
       document.body.appendChild(p);
-      setTimeout(function(pp){document.body.removeChild(pp);},700,p);
+      setTimeout(function(pp){if(pp.parentNode)pp.parentNode.removeChild(pp);},650,p);
     }
   });
 }
@@ -446,8 +434,7 @@ function showScoreFloat(pts,cx,cy){
   var el=document.createElement("div");
   el.className="score-float";
   el.textContent="+"+pts;
-  el.style.left=cx+"px";
-  el.style.top=cy+"px";
+  el.style.left=cx+"px"; el.style.top=cy+"px";
   document.body.appendChild(el);
   setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},900);
 }
@@ -456,25 +443,20 @@ function drop(cx,cy){
   document.getElementById("drag-ghost").style.display="none";
   var sl=document.querySelector(".block-slot[data-idx='"+dragging+"']");
   if(sl)sl.classList.remove("dragging");
-  var a=getAnchor(cx,cy);hoverR=a.row;hoverC=a.col;
+  var a=getAnchor(cx,cy); hoverR=a.row; hoverC=a.col;
   if(!canPlace(dragBlock.shape,hoverR,hoverC)){
-    dragging=-1;dragBlock=null;hoverR=null;hoverC=null;clearGhost();
+    dragging=-1; dragBlock=null; hoverR=null; hoverC=null; clearGhost();
     var w=document.getElementById("grid-wrap");
     w.classList.add("shake");
     setTimeout(function(){w.classList.remove("shake");},350);
     return;
   }
-  var bc=0,placedCells=[];
-  for(var r=0;r<dragBlock.shape.length;r++)for(var c=0;c<dragBlock.shape[r].length;c++){
-    if(dragBlock.shape[r][c]){
-      grid[hoverR+r][hoverC+c]=dragBlock.color;
-      placedCells.push("c"+(hoverR+r)+"-"+(hoverC+c));
-      bc++;
-    }
+  var bc=0;
+  for(var r=0;r<dragBlock.shape.length;r++) for(var c=0;c<dragBlock.shape[r].length;c++){
+    if(dragBlock.shape[r][c]){ grid[hoverR+r][hoverC+c]=dragBlock.color; bc++; }
   }
   var idx=dragging;
-  dragging=-1;dragBlock=null;hoverR=null;hoverC=null;
-
+  dragging=-1; dragBlock=null; hoverR=null; hoverC=null;
   var cleared=clearLines();
   combo=cleared>0?combo+1:0;
   var ls=cleared*18+(cleared>1?cleared*(cleared-1)*10:0);
@@ -484,16 +466,13 @@ function drop(cx,cy){
   if(score>best){best=score;localStorage.setItem("bb_best",best);}
   document.getElementById("score-val").textContent=score;
   document.getElementById("best-val").textContent=best;
-  document.getElementById("combo-text").textContent=combo>1?"COMBO x"+combo+"  🔥":"";
-
-  if(gained>0) showScoreFloat(gained,cx-20,cy-80);
+  document.getElementById("combo-text").textContent=combo>1?"COMBO x"+combo+" 🔥":"";
+  if(gained>bc) showScoreFloat(gained,cx-20,cy-70);
   if(cleared>0) showComboPopup(cleared,combo);
-
   blocks[idx]=null;
   if(blocks.every(function(b){return b===null;}))
     blocks=[randomBlock(),randomBlock(),randomBlock()];
-
-  renderGrid();renderTray();clearGhost();
+  renderGrid(); renderTray(); clearGhost();
   setTimeout(function(){if(!hasAnyMove())showGameOver();},50);
 }
 
@@ -510,33 +489,23 @@ function clearLines(){
     if(full)cc.push(c);
   }
   if(!rc.length&&!cc.length)return 0;
-
   var fs={};
-  for(var i=0;i<rc.length;i++)for(var c=0;c<GS;c++)fs["c"+rc[i]+"-"+c]=1;
-  for(var i=0;i<cc.length;i++)for(var r=0;r<GS;r++)fs["c"+r+"-"+cc[i]]=1;
-
+  for(var i=0;i<rc.length;i++) for(var c=0;c<GS;c++) fs["c"+rc[i]+"-"+c]=1;
+  for(var i=0;i<cc.length;i++) for(var r=0;r<GS;r++) fs["c"+r+"-"+cc[i]]=1;
   var keys=Object.keys(fs);
-
-  // Collect colors for particles
   var colorMap={};
   keys.forEach(function(id){
     var el=document.getElementById(id);
-    if(el&&el.style.background)colorMap[id]=el.style.background;
+    if(el)colorMap[id]=el.style.background||"#a5b4fc";
   });
-
-  // Trigger cell pop animation
   keys.forEach(function(id){
     var el=document.getElementById(id);
     if(el){
       el.classList.add("clearing");
-      // Stagger slightly for wave effect
       var parts=id.replace("c","").split("-");
-      var r=parseInt(parts[0]),c2=parseInt(parts[1]);
-      el.style.animationDelay=(r+c2)*0.018+"s";
+      el.style.animationDelay=(parseInt(parts[0])+parseInt(parts[1]))*0.016+"s";
     }
   });
-
-  // Spawn particles
   setTimeout(function(){
     var groups={};
     keys.forEach(function(id){
@@ -544,25 +513,20 @@ function clearLines(){
       if(!groups[col])groups[col]=[];
       groups[col].push(id);
     });
-    Object.keys(groups).forEach(function(col){
-      spawnParticles(groups[col],col);
-    });
-  },80);
-
-  // Clear grid after animation
+    Object.keys(groups).forEach(function(col){ spawnParticles(groups[col],col); });
+  },70);
   setTimeout(function(){
-    for(var i=0;i<rc.length;i++)for(var c=0;c<GS;c++)grid[rc[i]][c]=null;
-    for(var i=0;i<cc.length;i++)for(var r=0;r<GS;r++)grid[r][cc[i]]=null;
+    for(var i=0;i<rc.length;i++) for(var c=0;c<GS;c++) grid[rc[i]][c]=null;
+    for(var i=0;i<cc.length;i++) for(var r=0;r<GS;r++) grid[r][cc[i]]=null;
     renderGrid();
   },360);
-
   return rc.length+cc.length;
 }
 
 function showComboPopup(lines,c){
   var p=document.getElementById("combo-popup");
-  p.style.display="block";p.style.left="50%";p.style.top="45%";
-  p.style.animation="none";p.style.webkitAnimation="none";
+  p.style.display="block"; p.style.left="50%"; p.style.top="45%";
+  p.style.animation="none"; p.style.webkitAnimation="none";
   void p.offsetHeight;
   p.style.animation="comboIn 0.9s cubic-bezier(.34,1.56,.64,1) forwards";
   p.style.webkitAnimation="comboIn 0.9s cubic-bezier(.34,1.56,.64,1) forwards";
@@ -579,15 +543,22 @@ function showGameOver(){
 
 function resetGame(){
   document.getElementById("gameover").style.display="none";
-  score=0;combo=0;
+  score=0; combo=0;
   document.getElementById("score-val").textContent=0;
   document.getElementById("combo-text").textContent="";
   initGrid();
   blocks=[randomBlock(),randomBlock(),randomBlock()];
-  renderGrid();renderTray();
+  renderGrid(); renderTray();
 }
 
-window.addEventListener("DOMContentLoaded",function(){resetGame();});
+window.addEventListener("DOMContentLoaded",function(){
+  calcCellSize();
+  resetGame();
+});
+window.addEventListener("resize",function(){
+  calcCellSize();
+  renderGrid(); renderTray();
+});
 </script>
 </body>
 </html>
