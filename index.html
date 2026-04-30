@@ -7,7 +7,20 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Block Blast">
 <meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#070d14">
 <title>Block Blast</title>
+<script>
+(function(){
+  var m={name:"Block Blast",short_name:"Block Blast",
+    start_url:".",display:"fullscreen",
+    background_color:"#070d14",theme_color:"#070d14",
+    icons:[{src:"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' fill='%23070d14'/%3E%3Crect x='24' y='24' width='60' height='60' rx='10' fill='%234f6ef7'/%3E%3Crect x='108' y='24' width='60' height='60' rx='10' fill='%23f87171'/%3E%3Crect x='24' y='108' width='60' height='60' rx='10' fill='%234ade80'/%3E%3Crect x='108' y='108' width='60' height='60' rx='10' fill='%23facc15'/%3E%3C/svg%3E",sizes:"192x192",type:"image/svg+xml"}]};
+  var b=new Blob([JSON.stringify(m)],{type:"application/json"});
+  var l=document.createElement("link");
+  l.rel="manifest"; l.href=URL.createObjectURL(b);
+  document.head.appendChild(l);
+})();
+</script>
 <style>
 /* ── Reset ── */
 * { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-user-select:none; -webkit-tap-highlight-color:transparent; }
@@ -135,7 +148,7 @@ body {
   position:fixed; pointer-events:none; z-index:500; display:none;
   top:0; left:0;
   will-change:transform;
-  filter:drop-shadow(0 16px 32px rgba(0,0,0,0.7));
+  /* drop-shadow 移除：會強制 composite 每幀重算，是拖曳延遲的元兇 */
 }
 .ghost-cell {
   border-radius:5px;
@@ -257,6 +270,7 @@ var grid, blocks, score, best, combo;
 var dragging=-1, dragBlock=null, hoverR=null, hoverC=null;
 var noClearStreak=0;
 var rafId=null;
+var isClearing=false; /* 消除動畫進行中：封鎖新的拖曳，防止事件被格子攔截導致拖不動 */
 
 best=parseInt(localStorage.getItem("bb_best")||"0");
 document.getElementById("best-val").textContent=best;
@@ -387,11 +401,11 @@ function getNearFullLines(){
   var rows=[],cols=[];
   for(var r=0;r<GS;r++){
     var f=0; for(var c=0;c<GS;c++) if(grid[r][c])f++;
-    var g=GS-f; if(g>0&&g<=3)rows.push({r:r,gap:g});
+    var g=GS-f; if(g>0&&g<=5)rows.push({r:r,gap:g});
   }
   for(var c=0;c<GS;c++){
     var f=0; for(var r=0;r<GS;r++) if(grid[r][c])f++;
-    var g=GS-f; if(g>0&&g<=3)cols.push({c:c,gap:g});
+    var g=GS-f; if(g>0&&g<=5)cols.push({c:c,gap:g});
   }
   rows.sort(function(a,b){return a.gap-b.gap;});
   cols.sort(function(a,b){return a.gap-b.gap;});
@@ -399,6 +413,7 @@ function getNearFullLines(){
 }
 
 function canCompleteAnyLine(shape,nearFull){
+  // 橫向：shape能填滿某快滿行的所有空格（或填入部分，讓gap縮小）
   if(shape.length===1){
     for(var ri=0;ri<nearFull.rows.length;ri++){
       var tR=nearFull.rows[ri].r;
@@ -406,26 +421,36 @@ function canCompleteAnyLine(shape,nearFull){
       for(var c=0;c<GS;c++) if(!grid[tR][c])emptyCols.push(c);
       var w=shape[0].length;
       for(var sc=0;sc<=GS-w;sc++){
-        var cov={};
-        for(var cc=0;cc<w;cc++) if(shape[0][cc])cov[sc+cc]=1;
-        var ok=true;
-        for(var k=0;k<emptyCols.length;k++) if(!cov[emptyCols[k]]){ok=false;break;}
-        if(ok&&canPlace(shape,tR,sc))return true;
+        // 至少覆蓋1個空格，且不壓到已填格
+        var hits=0;
+        var valid=true;
+        for(var cc=0;cc<w;cc++){
+          if(!shape[0][cc])continue;
+          var col=sc+cc;
+          if(col<0||col>=GS){valid=false;break;}
+          if(grid[tR][col]){valid=false;break;} // 壓到已填格
+          hits++;
+        }
+        if(valid&&hits>0&&canPlace(shape,tR,sc))return true;
       }
     }
   }
+  // 縱向：shape能填入某快滿列的空格
   if(shape[0].length===1){
     for(var ci=0;ci<nearFull.cols.length;ci++){
       var tC=nearFull.cols[ci].c;
-      var emptyRows=[];
-      for(var r=0;r<GS;r++) if(!grid[r][tC])emptyRows.push(r);
       var h=shape.length;
       for(var sr=0;sr<=GS-h;sr++){
-        var cov={};
-        for(var rr=0;rr<h;rr++) if(shape[rr][0])cov[sr+rr]=1;
-        var ok=true;
-        for(var k=0;k<emptyRows.length;k++) if(!cov[emptyRows[k]]){ok=false;break;}
-        if(ok&&canPlace(shape,sr,tC))return true;
+        var hits=0;
+        var valid=true;
+        for(var rr=0;rr<h;rr++){
+          if(!shape[rr][0])continue;
+          var row=sr+rr;
+          if(row<0||row>=GS){valid=false;break;}
+          if(grid[row][tC]){valid=false;break;}
+          hits++;
+        }
+        if(valid&&hits>0&&canPlace(shape,sr,tC))return true;
       }
     }
   }
@@ -611,6 +636,7 @@ function getGridAnchor(cx,cy){
 
 function startDrag(idx,cx,cy){
   if(!blocks[idx])return;
+  if(isClearing)return; /* 消除動畫中不接受新拖曳 */
   dragging=idx; dragBlock=blocks[idx];
   var sl=document.querySelector(".block-slot[data-idx='"+idx+"']");
   if(sl)sl.classList.add("dragging");
@@ -630,9 +656,20 @@ function onMove(cx,cy){
   });
 }
 
-window.addEventListener("mousemove",function(e){onMove(e.clientX,e.clientY);});
+window.addEventListener("mousemove",function(e){
+  if(dragging<0)return;
+  moveDragGhost(e.clientX,e.clientY);
+  var a=getGridAnchor(e.clientX,e.clientY);
+  if(a.row!==hoverR||a.col!==hoverC){hoverR=a.row;hoverC=a.col;renderGhost();}
+});
 window.addEventListener("touchmove",function(e){
-  e.preventDefault(); onMove(e.touches[0].clientX,e.touches[0].clientY);
+  if(dragging<0)return;
+  e.preventDefault();
+  var t=e.touches[0];
+  /* iOS：直接更新比 rAF 少一幀延遲，手指與方塊幾乎同步 */
+  moveDragGhost(t.clientX,t.clientY);
+  var a=getGridAnchor(t.clientX,t.clientY);
+  if(a.row!==hoverR||a.col!==hoverC){hoverR=a.row;hoverC=a.col;renderGhost();}
 },{passive:false});
 window.addEventListener("mouseup",function(e){if(dragging>=0)drop(e.clientX,e.clientY);});
 window.addEventListener("touchend",function(e){if(dragging>=0)drop(e.changedTouches[0].clientX,e.changedTouches[0].clientY);});
@@ -707,6 +744,7 @@ function processClears(dropR,dropC){
   }
 
   noClearStreak=0; combo++;
+  isClearing=true; /* 開始消除動畫，封鎖拖曳 */
 
   // 分數：唯一格數 × 10 × (1 + combo×0.5)
   var fs={};
@@ -775,6 +813,7 @@ function processClears(dropR,dropC){
       if(el){el.classList.remove("clearing");el.style.animationDelay="";}
     });
     updateGridDisplay();
+    isClearing=false; /* 消除完成，解除封鎖 */
 
     // 全清
     var isEmpty=true;
