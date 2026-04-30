@@ -288,33 +288,58 @@ function calcCS(){
 }
 
 /* ══════════════════════════════════════════════════
-   Shape Library（27種）
+   Shape Library（根據原版影片重新定義）
+   主力：2×2、1×2、1×3
+   偶爾：2×3/3×2、小L形(2格)
+   移除：1×4、1×5、3×3、3格L、T形、S/Z形
 ══════════════════════════════════════════════════ */
 var SHAPES=[
+  // 1×1（保底用，低機率出現）
   {s:[[1]],c:"#3b82f6"},
-  {s:[[1,1]],c:"#2dd4bf"},{s:[[1],[1]],c:"#2dd4bf"},
-  {s:[[1,1,1]],c:"#4ade80"},{s:[[1],[1],[1]],c:"#4ade80"},
-  {s:[[1,1,1,1]],c:"#facc15"},{s:[[1],[1],[1],[1]],c:"#facc15"},
-  {s:[[1,1,1,1,1]],c:"#f87171"},{s:[[1],[1],[1],[1],[1]],c:"#f87171"},
+  // 1×2 橫/縱（主力）
+  {s:[[1,1]],c:"#2dd4bf"},
+  {s:[[1],[1]],c:"#2dd4bf"},
+  // 1×3 橫/縱（主力）
+  {s:[[1,1,1]],c:"#4ade80"},
+  {s:[[1],[1],[1]],c:"#4ade80"},
+  // 2×2（主力，原版最常見）
   {s:[[1,1],[1,1]],c:"#a78bfa"},
-  {s:[[1,1,1],[1,1,1],[1,1,1]],c:"#ec4899"},
-  {s:[[1,1,1],[1,1,1]],c:"#fb923c"},{s:[[1,1],[1,1],[1,1]],c:"#fb923c"},
-  {s:[[1,0],[1,1]],c:"#fb923c"},{s:[[0,1],[1,1]],c:"#fb923c"},
-  {s:[[1,1],[1,0]],c:"#fb923c"},{s:[[1,1],[0,1]],c:"#fb923c"},
-  {s:[[1,0,0],[1,0,0],[1,1,1]],c:"#fb923c"},{s:[[0,0,1],[0,0,1],[1,1,1]],c:"#fb923c"},
-  {s:[[1,1,1],[1,0,0],[1,0,0]],c:"#fb923c"},{s:[[1,1,1],[0,0,1],[0,0,1]],c:"#fb923c"},
-  {s:[[1,1,1],[0,1,0]],c:"#facc15"},{s:[[0,1,0],[1,1,1]],c:"#facc15"},
-  {s:[[1,0],[1,1],[1,0]],c:"#facc15"},{s:[[0,1],[1,1],[0,1]],c:"#facc15"},
-  {s:[[1,1,0],[0,1,1]],c:"#4ade80"},{s:[[0,1,1],[1,1,0]],c:"#4ade80"},
+  // 小L形 2格（4種方向）
+  {s:[[1,0],[1,1]],c:"#fb923c"},
+  {s:[[0,1],[1,1]],c:"#fb923c"},
+  {s:[[1,1],[1,0]],c:"#fb923c"},
+  {s:[[1,1],[0,1]],c:"#fb923c"},
+  // 2×3 / 3×2（偶爾，全清後重建盤面用）
+  {s:[[1,1,1],[1,1,1]],c:"#fb923c"},
+  {s:[[1,1],[1,1],[1,1]],c:"#fb923c"},
 ];
-var SMALL_IDX=[], LINE_IDX=[3,4,5,6,7,8];
-for(var _i=0;_i<SHAPES.length;_i++){
-  var _sz=0;
-  for(var _r=0;_r<SHAPES[_i].s.length;_r++)
-    for(var _c=0;_c<SHAPES[_i].s[_r].length;_c++)
-      if(SHAPES[_i].s[_r][_c])_sz++;
-  if(_sz<=4)SMALL_IDX.push(_i);
+
+// 各形狀權重（對應SHAPES索引，數字越大越常出現）
+var WEIGHTS=[
+  1,   // 1×1
+  6,   // 1×2 橫
+  6,   // 1×2 縱
+  6,   // 1×3 橫
+  6,   // 1×3 縱
+  10,  // 2×2（最高）
+  4,   // 小L ↙
+  4,   // 小L ↘
+  4,   // 小L ↖
+  4,   // 小L ↗
+  2,   // 2×3
+  2,   // 3×2
+];
+var WEIGHT_TOTAL=0;
+for(var _w=0;_w<WEIGHTS.length;_w++) WEIGHT_TOTAL+=WEIGHTS[_w];
+
+function weightedRandom(){
+  var r=Math.floor(Math.random()*WEIGHT_TOTAL);
+  for(var i=0;i<WEIGHTS.length;i++){r-=WEIGHTS[i];if(r<0)return i;}
+  return WEIGHTS.length-1;
 }
+
+// 長條索引（盤面感知用）
+var LINE_IDX=[2,3,4]; // 1×2縱、1×3橫、1×3縱
 
 /* ══════════════════════════════════════════════════
    Grid init（一次性建 DOM，後續只更新屬性）
@@ -458,7 +483,7 @@ function canCompleteAnyLine(shape,nearFull){
 }
 
 /* ══════════════════════════════════════════════════
-   智慧生成（盤面感知 + Pity Timer）
+   智慧生成（加權隨機 + 盤面感知 + Pity Timer）
 ══════════════════════════════════════════════════ */
 function generateSmartBlocks(){
   var emptyCount=0;
@@ -470,22 +495,30 @@ function generateSmartBlocks(){
 
   for(var i=0;i<3;i++){
     var block=null, attempts=0;
-    while(attempts<50){
+    while(attempts<60){
       var idx, cand;
 
-      // ① Pity：連續2組沒消行 → 強制長條
-      if(isPity&&!guaranteedLine&&attempts<20){
+      // ① Pity：強制給能填快滿行的方塊
+      if(isPity&&!guaranteedLine&&attempts<25){
+        var pool=LINE_IDX.slice(); shuffle(pool);
+        var found=false;
+        for(var li=0;li<pool.length;li++){
+          cand=SHAPES[pool[li]];
+          if(canFitAnywhere(cand.s)&&canCompleteAnyLine(cand.s,nearFull)){
+            block={shape:cand.s,color:cand.c};
+            guaranteedLine=true; found=true; break;
+          }
+        }
+        if(found)break;
+        // pity但找不到配合行 → 給1x2/1x3小塊
         idx=LINE_IDX[Math.floor(Math.random()*LINE_IDX.length)];
         cand=SHAPES[idx];
-        if(canFitAnywhere(cand.s)){
-          block={shape:cand.s,color:cand.c};
-          guaranteedLine=true; break;
-        }
+        if(canFitAnywhere(cand.s)){block={shape:cand.s,color:cand.c};guaranteedLine=true;break;}
         attempts++; continue;
       }
 
-      // ② 盤面感知：有快滿行列 → 55%機率給能填滿的長條
-      if(hasNearFull&&!guaranteedLine&&Math.random()<0.55&&attempts<25){
+      // ② 盤面感知：有快滿行列 → 60%機率給能配合的方塊
+      if(hasNearFull&&!guaranteedLine&&Math.random()<0.60&&attempts<30){
         var pool=LINE_IDX.slice(); shuffle(pool);
         var found=false;
         for(var li=0;li<pool.length;li++){
@@ -498,20 +531,13 @@ function generateSmartBlocks(){
         if(found)break;
       }
 
-      // ③ 格子少 → 強制小方塊
-      if(emptyCount<18&&attempts<20){
-        idx=SMALL_IDX[Math.floor(Math.random()*SMALL_IDX.length)];
-      } else {
-        // ④ 一般隨機（65%小，35%全庫）
-        idx=Math.random()<0.65
-          ?SMALL_IDX[Math.floor(Math.random()*SMALL_IDX.length)]
-          :Math.floor(Math.random()*SHAPES.length);
-      }
+      // ③ 加權隨機（2×2機率最高）
+      idx=weightedRandom();
       cand=SHAPES[idx];
       if(canFitAnywhere(cand.s)){block={shape:cand.s,color:cand.c};break;}
       attempts++;
     }
-    if(!block)block={shape:SHAPES[0].s,color:SHAPES[0].c};
+    if(!block)block={shape:SHAPES[1].s,color:SHAPES[1].c}; // 保底1×2
     result.push(block);
   }
   return result;
@@ -737,21 +763,24 @@ function processClears(dropR,dropC){
   }
 
   if(rc.length+cc.length===0){
-    combo=0; noClearStreak++;
-    updateComboDisplay();
+    /* 沒消行：combo不立刻歸零，給1次緩衝
+       連續2次放置沒消行才真正歸零（原版觀察） */
+    noClearStreak++;
+    if(noClearStreak>=2){ combo=0; updateComboDisplay(); }
     setTimeout(function(){if(checkGameOver())showGameOver();},50);
     return;
   }
 
-  noClearStreak=0; combo++;
-  isClearing=true; /* 開始消除動畫，封鎖拖曳 */
+  noClearStreak=0;
+  combo++; /* 每次放置只要有消行就+1，不等三個放完 */
+  isClearing=true;
 
-  // 分數：唯一格數 × 10 × (1 + combo×0.5)
+  // 分數：唯一消除格數 × combo（原版每格顯示的數字=combo值）
   var fs={};
   for(var i=0;i<rc.length;i++) for(var c=0;c<GS;c++) fs["c"+rc[i]+"-"+c]=1;
   for(var i=0;i<cc.length;i++) for(var r=0;r<GS;r++) fs["c"+r+"-"+cc[i]]=1;
   var keys=Object.keys(fs);
-  var clearScore=Math.round(keys.length*10*(1+combo*0.5));
+  var clearScore=keys.length*combo;
   score+=clearScore;
   updateScore(true);
   updateComboDisplay();
@@ -860,10 +889,9 @@ function spawnFX(r,c,pts,cb,lines){
   div.style.top=(r*(CS+GAP)+CS/2+6)+"px";
   var msgs=["","","Good!","Great!","Excellent!","Amazing!","Perfect!","Legendary!"];
   var html="";
-  if(cb>1) html+='<div class="fx-combo">COMBO '+cb+'×</div>';
+  if(cb>=2) html+='<div class="fx-combo">COMBO '+cb+'×</div>';
   if(lines>=2) html+='<div class="fx-score">+'+pts+'</div><div class="fx-msg">'+(msgs[Math.min(lines,7)]||"Legendary!")+'</div>';
-  else if(cb>1) html+='<div class="fx-score">+'+pts+'</div>';
-  if(!html)return;
+  else html+='<div class="fx-score">+'+pts+'</div>';
   div.innerHTML=html;
   wrap.appendChild(div);
   setTimeout(function(){if(div.parentNode)div.parentNode.removeChild(div);},950);
